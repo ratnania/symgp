@@ -32,9 +32,16 @@ class Kernel(Expr):
                 elif isinstance(v, (tuple, list, Tuple)):
                     for a in v:
                         if not isinstance(a, (str, Symbol)):
+                            print(type(a))
                             raise TypeError('expecing str or Symbol')
 
-                    v = [Symbol(i) for i in v]
+                    vs = []
+                    for i in v:
+                        if isinstance(i, str):
+                            vs.append(Symbol(i))
+                        elif isinstance(i, Symbol):
+                            vs.append(i)
+                    v = vs
 
                 v = Tuple(*v)
                 ls.append(v)
@@ -71,23 +78,33 @@ def _evaluate(expr, u, K, xi, x):
     except:
         L = expr
 
-#    print(L.atoms())
-
+#    print('> ', L)
     if isinstance(L, Derivative):
         f = L.args[0] ; args = list(L.variables)
         if isinstance(f, AppliedUndef):
             f = f.func
 
         args = Tuple(*args)
-        args = args.subs(x, xi)
+        if isinstance(xi, (list, tuple, Tuple)):
+            for _x, _xi in zip(x, xi):
+                args = args.subs(_x, _xi)
+        else:
+            args = args.subs(x, xi)
+
         return Derivative(f, *args)
 
     elif isinstance(L, UndefinedFunction):
-        return L(xi)
+        if isinstance(xi, (list, tuple, Tuple)):
+            return L(*xi)
+        else:
+            return L(xi)
 
     elif isinstance(L, AppliedUndef):
         args = list(L.args)
-        args += [xi]
+        if isinstance(xi, (list, tuple, Tuple)):
+            args += xi
+        else:
+            args += [xi]
         func = L.func
         return func(*args)
 
@@ -134,28 +151,31 @@ def evaluate(expr, u, K):
     F = Function(K.name)
 
     for xis in variables:
-        for xi, x in zip(xis, coordinates):
-            if isinstance(F, Add):
-                args = [_evaluate(expr, u, f, xi, x) for f in F.args]
-                F = Add(*args)
+        xi = xis ; x = coordinates[:len(xis)]
+        if not isinstance(xi, (list, tuple, Tuple)):
+            x = x[0]
 
-            elif isinstance(F, Mul):
-                coeffs  = [i for i in F.args if isinstance(i, _coeffs_registery)]
-                vectors = [i for i in F.args if not(i in coeffs)]
+        if isinstance(F, Add):
+            args = [_evaluate(expr, u, f, xi, x) for f in F.args]
+            F = Add(*args)
 
-                i = S.One
-                if coeffs:
-                    i = Mul(*coeffs)
+        elif isinstance(F, Mul):
+            coeffs  = [i for i in F.args if isinstance(i, _coeffs_registery)]
+            vectors = [i for i in F.args if not(i in coeffs)]
 
-                j = S.One
-                if vectors:
-                    args = [_evaluate(a, u, K, xi, x) for a in vectors]
-                    j = Mul(*args)
+            i = S.One
+            if coeffs:
+                i = Mul(*coeffs)
 
-                F = Mul(i, j)
+            j = S.One
+            if vectors:
+                args = [_evaluate(a, u, K, xi, x) for a in vectors]
+                j = Mul(*args)
 
-            else:
-                F = _evaluate(expr, u, F, xi, x)
+            F = Mul(i, j)
+
+        else:
+            F = _evaluate(expr, u, F, xi, x)
 
     if K.expr:
         raise NotImplemented('TODO')
