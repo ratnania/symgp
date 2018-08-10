@@ -85,26 +85,17 @@ def _evaluate(expr, u, K, xi, x):
             f = f.func
 
         args = Tuple(*args)
-        if isinstance(xi, (list, tuple, Tuple)):
-            for _x, _xi in zip(x, xi):
-                args = args.subs(_x, _xi)
-        else:
-            args = args.subs(x, xi)
+        for _x, _xi in zip(x, xi):
+            args = args.subs(_x, _xi)
 
         return Derivative(f, *args)
 
     elif isinstance(L, UndefinedFunction):
-        if isinstance(xi, (list, tuple, Tuple)):
-            return L(*xi)
-        else:
-            return L(xi)
+        return L(*xi)
 
     elif isinstance(L, AppliedUndef):
         args = list(L.args)
-        if isinstance(xi, (list, tuple, Tuple)):
-            args += xi
-        else:
-            args += [xi]
+        args += xi
         func = L.func
         return func(*args)
 
@@ -152,8 +143,6 @@ def evaluate(expr, u, K):
 
     for xis in variables:
         xi = xis ; x = coordinates[:len(xis)]
-        if not isinstance(xi, (list, tuple, Tuple)):
-            x = x[0]
 
         if isinstance(F, Add):
             args = [_evaluate(expr, u, f, xi, x) for f in F.args]

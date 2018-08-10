@@ -43,16 +43,18 @@ if __name__ == '__main__':
     beta = Constant('beta')
     alpha = Constant('alpha')
     mu = Constant('mu')
+    phi = Constant('phi')
 #    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
-    L = dx(u) + dy(u)
+#    L = dx(u) + dy(u)
 #    L = u
 #    L = dx(u)
 #    L = dy(u)
 #    L = dy(dy(u))
 #    L = dx(dy(u))
+    L = phi * u + dx(u) + dy(dy(u))
 
     Ki = evaluate(L, u, Kernel('K', (Tuple(xi, yi),)))
     print(Ki)
 
-#    Kij = evaluate(L, u, Kernel('K', (Tuple(xi,yi), Tuple(xj,yj))))
-#    print(Kij)
+    Kij = evaluate(L, u, Kernel('K', (Tuple(xi,yi), Tuple(xj,yj))))
+    print(Kij)
