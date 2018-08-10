@@ -111,6 +111,35 @@ def test_kernel_1d_5():
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
 
+def test_kernel_1d_6():
+    beta = Constant('beta')
+    alpha = Constant('alpha')
+    mu = Constant('mu')
+    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
+
+    # ...
+    expected = alpha*Derivative(k, xi) + beta*Derivative(k, xi, xi) + mu*k(xi)
+    assert(evaluate(L, u, Kernel('K', xi)) == expected)
+    # ...
+
+    # ...
+    expected = alpha*Derivative(k, xj) + beta*Derivative(k, xj, xj) + mu*k(xj)
+    assert(evaluate(L, u, Kernel('K', xj)) == expected)
+    # ...
+
+    # ...
+    expected = (alpha**2*Derivative(k, xi, xj, xj) +
+                alpha*beta*Derivative(k, xi, xi, xj, xj) +
+                alpha*beta*Derivative(k, xi, xj, xj, xj, xj) +
+                alpha*mu*Derivative(k, xi) +
+                alpha*mu*Derivative(k, xj, xj) +
+                beta**2*Derivative(k, xi, xi, xj, xj, xj, xj) +
+                beta*mu*Derivative(k, xi, xi) +
+                beta*mu*Derivative(k, xj, xj, xj, xj) +
+                mu**2*k(xi, xj))
+    assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
+    # ...
+
 ######################################
 if __name__ == '__main__':
 
@@ -119,18 +148,15 @@ if __name__ == '__main__':
     test_kernel_1d_3()
     test_kernel_1d_4()
     test_kernel_1d_5()
+    test_kernel_1d_6()
 
-#    c1 = Constant('c1')
-#    c2 = Constant('c2')
-#    c3 = Constant('c3')
-#    L = c1*dx(dx(u)) + c2*dx(u) + c3*u
-#    L = dx(dx(u)) + dx(u) + u
-
+    beta = Constant('beta')
     alpha = Constant('alpha')
-    L = dx(u) + alpha*u
-
-#    Kij = evaluate(L, u, Kernel('K', (xi, xj)))
-#    print(Kij)
+    mu = Constant('mu')
+    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
 
 #    Ki = evaluate(L, u, Kernel('K', xi))
 #    print(Ki)
+#
+#    Kij = evaluate(L, u, Kernel('K', (xi, xj)))
+#    print(Kij)
