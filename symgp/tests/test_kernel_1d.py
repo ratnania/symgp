@@ -105,11 +105,11 @@ def test_kernel_1d_5():
     assert(evaluate(L, u, Kernel('K', xj)) == expected)
     # ...
 
-#    # ...
-#    expected = (k(xi, xj) + Derivative(k, xi) + Derivative(k, xj) +
-#                Derivative(k, xi, xj))
-#    assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
-#    # ...
+    # ...
+    expected = (alpha**2*k(xi, xj) + alpha*Derivative(k, xi) +
+                alpha*Derivative(k, xj, xj) + Derivative(k, xi, xj))
+    assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
+    # ...
 
 ######################################
 if __name__ == '__main__':

@@ -97,7 +97,23 @@ def _evaluate(expr, u, K, xi, x):
         func = L.func
         return func(*args)
 
+    elif isinstance(L, Mul):
+        coeffs  = [i for i in L.args if isinstance(i, _coeffs_registery)]
+        vectors = [i for i in L.args if not(i in coeffs)]
+
+        i = S.One
+        if coeffs:
+            i = Mul(*coeffs)
+
+        j = S.One
+        if vectors:
+            args = [_evaluate(expr, u, a, xi, x) for a in vectors]
+            j = Mul(*args)
+
+        return Mul(i, j)
+
     else:
+        print(L)
         raise NotImplementedError('{}'.format(type(L)))
 
 def evaluate(expr, u, K):
