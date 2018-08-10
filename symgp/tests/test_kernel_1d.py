@@ -16,96 +16,100 @@ xj = Symbol('xj')
 k = Function('K') # used for assert
 
 def test_kernel_1d_1():
-    # ...
     L = dx(u)
 
+    # ...
     expected = Derivative(k, xi)
     assert(evaluate(L, u, Kernel('K', xi)) == expected)
     # ...
 
     # ...
-    L = dx(u)
-
     expected = Derivative(k, xj)
     assert(evaluate(L, u, Kernel('K', xj)) == expected)
     # ...
 
     # ...
-    L = dx(u)
-
     expected = Derivative(k, xi, xj)
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
 
 def test_kernel_1d_2():
-    # ...
     L = dx(dx(u))
 
+    # ...
     expected = Derivative(k, xi, xi)
     assert(evaluate(L, u, Kernel('K', xi)) == expected)
     # ...
 
     # ...
-    L = dx(dx(u))
-
     expected = Derivative(k, xj, xj)
     assert(evaluate(L, u, Kernel('K', xj)) == expected)
     # ...
 
     # ...
-    L = dx(dx(u))
-
     expected = Derivative(k, xi, xi, xj, xj)
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
 
 def test_kernel_1d_3():
-    # ...
     L = dx(u) + u
 
+    # ...
     expected = k(xi) + Derivative(k, xi)
     assert(evaluate(L, u, Kernel('K', xi)) == expected)
     # ...
 
     # ...
-    L = dx(u) + u
-
     expected = k(xj) + Derivative(k, xj)
     assert(evaluate(L, u, Kernel('K', xj)) == expected)
     # ...
 
     # ...
-    L = dx(u) + u
-
     expected = (k(xi, xj) + Derivative(k, xi) + Derivative(k, xj) +
                 Derivative(k, xi, xj))
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
 
 def test_kernel_1d_4():
-    # ...
     L = dx(dx(u)) + dx(u) + u
 
+    # ...
     expected = k(xi) + Derivative(k, xi) + Derivative(k, xi, xi)
     assert(evaluate(L, u, Kernel('K', xi)) == expected)
     # ...
 
     # ...
-    L = dx(dx(u)) + dx(u) + u
-
     expected = k(xj) + Derivative(k, xj) + Derivative(k, xj, xj)
     assert(evaluate(L, u, Kernel('K', xj)) == expected)
     # ...
 
     # ...
-    L = dx(dx(u)) + dx(u) + u
-
     expected = (k(xi, xj) + Derivative(k, xi) + Derivative(k, xj) +
                 Derivative(k, xi, xi) + Derivative(k, xi, xj) +
                 Derivative(k, xj, xj) + Derivative(k, xi, xi, xj) +
                 Derivative(k, xi, xj, xj) + Derivative(k, xi, xi, xj, xj))
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
+
+def test_kernel_1d_5():
+    alpha = Constant('alpha')
+    L = dx(u) + alpha*u
+
+    # ...
+    expected = alpha*k(xi) + Derivative(k, xi)
+    assert(evaluate(L, u, Kernel('K', xi)) == expected)
+    # ...
+
+    # ...
+    expected = alpha*k(xj) + Derivative(k, xj)
+    assert(evaluate(L, u, Kernel('K', xj)) == expected)
+    # ...
+
+#    # ...
+#    expected = (k(xi, xj) + Derivative(k, xi) + Derivative(k, xj) +
+#                Derivative(k, xi, xj))
+#    assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
+#    # ...
 
 ######################################
 if __name__ == '__main__':
@@ -114,6 +118,7 @@ if __name__ == '__main__':
     test_kernel_1d_2()
     test_kernel_1d_3()
     test_kernel_1d_4()
+    test_kernel_1d_5()
 
 #    c1 = Constant('c1')
 #    c2 = Constant('c2')
@@ -127,5 +132,5 @@ if __name__ == '__main__':
 #    Kij = evaluate(L, u, Kernel('K', (xi, xj)))
 #    print(Kij)
 
-    Ki = evaluate(L, u, Kernel('K', xi))
-    print(Ki)
+#    Ki = evaluate(L, u, Kernel('K', xi))
+#    print(Ki)

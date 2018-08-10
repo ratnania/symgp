@@ -1,9 +1,11 @@
 # coding: utf-8
 from symfe import dx, Unknown, Constant
+from symfe.core.basic import _coeffs_registery
 
 from sympy import Function, Derivative, Symbol
 from sympy import Tuple
-from sympy import Expr, Basic, Add
+from sympy import Expr, Basic, Add, Mul
+from sympy import S
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 
@@ -60,6 +62,21 @@ def _evaluate(expr, u, K, xi, x):
     if isinstance(expr, Add):
         args = [_evaluate(a, u, K, xi, x) for a in expr.args]
         return Add(*args)
+
+    elif isinstance(expr, Mul):
+        coeffs  = [i for i in expr.args if isinstance(i, _coeffs_registery)]
+        vectors = [i for i in expr.args if not(i in coeffs)]
+
+        i = S.One
+        if coeffs:
+            i = Mul(*coeffs)
+
+        j = S.One
+        if vectors:
+            args = [_evaluate(a, u, K, xi, x) for a in vectors]
+            j = Mul(*args)
+
+        return Mul(i, j)
 
     L = expr.subs({u: K})
     if isinstance(L, Derivative):
