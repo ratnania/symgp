@@ -1,11 +1,9 @@
 # coding: utf-8
 
-from symgp.calculus import dx, dy, dz
-from symgp.calculus import Constant
-from symgp.calculus import Unknown
-from symgp.calculus import _partial_derivatives
-from symgp.calculus import find_partial_derivatives
-from symgp.calculus import sort_partial_derivatives
+from symfe.core import dx, dy, dz
+from symfe.core import Constant
+from symfe.core import Unknown
+from symfe.core import sort_partial_derivatives
 
 from sympy import preorder_traversal
 from sympy import Derivative
@@ -19,6 +17,8 @@ from sympy import Function
 from sympy import Tuple
 from sympy import Symbol
 
+_partial_derivatives = [dx, dy, dz]
+
 def generic_kernel(expr, func, y, args=None):
     if isinstance(y, Symbol):
         _derivatives = tuple([dx])
@@ -26,6 +26,14 @@ def generic_kernel(expr, func, y, args=None):
         _derivatives = tuple(_partial_derivatives[:len(y)])
     elif not isinstance(y, (list, tuple)):
         raise TypeError('expecting a Symbol or Tuple')
+
+    # ... compute ldim
+    unknowns = [i for i in expr.free_symbols if isinstance(i, Unknown)]
+    if not unknowns:
+        raise ValueError('> Expecting at least one unknown in the expression')
+
+    ldim = unknowns[0].ldim
+    # ...
 
     _args = []
     if args:
@@ -46,10 +54,10 @@ def generic_kernel(expr, func, y, args=None):
             ei = ej
         expr = ei
 
-        # check that there are no partial derivatives in the final expression
-        ops = find_partial_derivatives(expr)
-        if not(len(ops) == 0):
-            raise ValueError('Found unexpected partial differential operators in \n{}'.format(expr))
+#        # check that there are no partial derivatives in the final expression
+#        ops = find_partial_derivatives(expr)
+#        if not(len(ops) == 0):
+#            raise ValueError('Found unexpected partial differential operators in \n{}'.format(expr))
 
         return expr
     else:
@@ -79,7 +87,7 @@ def generic_kernel(expr, func, y, args=None):
         # TODO improve
         elif isinstance(func, Function):
             fname = type(func).__name__
-            func = [Unknown(fname)]
+            func = [Unknown(fname, ldim=ldim)]
 
         else:
             raise NotImplementedError('type = ', type(func), func)
