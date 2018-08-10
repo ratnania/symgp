@@ -107,7 +107,7 @@ def test_kernel_1d_5():
 
     # ...
     expected = (alpha**2*k(xi, xj) + alpha*Derivative(k, xi) +
-                alpha*Derivative(k, xj, xj) + Derivative(k, xi, xj))
+                alpha*Derivative(k, xj) + Derivative(k, xi, xj))
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...
 
@@ -128,14 +128,14 @@ def test_kernel_1d_6():
     # ...
 
     # ...
-    expected = (alpha**2*Derivative(k, xi, xj, xj) +
-                alpha*beta*Derivative(k, xi, xi, xj, xj) +
-                alpha*beta*Derivative(k, xi, xj, xj, xj, xj) +
+    expected = (alpha**2*Derivative(k, xi, xj) +
+                alpha*beta*Derivative(k, xi, xi, xj) +
+                alpha*beta*Derivative(k, xi, xj, xj) +
                 alpha*mu*Derivative(k, xi) +
-                alpha*mu*Derivative(k, xj, xj) +
-                beta**2*Derivative(k, xi, xi, xj, xj, xj, xj) +
+                alpha*mu*Derivative(k, xj) +
+                beta**2*Derivative(k, xi, xi, xj, xj) +
                 beta*mu*Derivative(k, xi, xi) +
-                beta*mu*Derivative(k, xj, xj, xj, xj) +
+                beta*mu*Derivative(k, xj, xj) +
                 mu**2*k(xi, xj))
     assert(evaluate(L, u, Kernel('K', (xi, xj))) == expected)
     # ...

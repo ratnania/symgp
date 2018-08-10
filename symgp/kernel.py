@@ -4,7 +4,7 @@ from symfe.core.basic import _coeffs_registery
 
 from sympy import Function, Derivative, Symbol
 from sympy import Tuple
-from sympy import Expr, Basic, Add, Mul
+from sympy import Expr, Basic, Add, Mul, Pow
 from sympy import S
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
@@ -42,19 +42,21 @@ class Kernel(Expr):
             variables = Tuple(*ls)
         # ...
 
-        return Basic.__new__(cls, name, variables, expr)
+        obj = Basic.__new__(cls, variables, expr)
+        obj._name = name
+        return obj
 
     @property
     def name(self):
-        return self._args[0]
+        return self._name
 
     @property
     def variables(self):
-        return self._args[1]
+        return self._args[0]
 
     @property
     def expr(self):
-        return self._args[2]
+        return self._args[1]
 
 
 def _evaluate(expr, u, K, xi, x):
@@ -63,22 +65,14 @@ def _evaluate(expr, u, K, xi, x):
         args = [_evaluate(a, u, K, xi, x) for a in expr.args]
         return Add(*args)
 
-    elif isinstance(expr, Mul):
-        coeffs  = [i for i in expr.args if isinstance(i, _coeffs_registery)]
-        vectors = [i for i in expr.args if not(i in coeffs)]
+    # TODO remove try/except
+    try:
+        L = expr.subs({u: K})
+    except:
+        L = expr
 
-        i = S.One
-        if coeffs:
-            i = Mul(*coeffs)
+#    print(L.atoms())
 
-        j = S.One
-        if vectors:
-            args = [_evaluate(a, u, K, xi, x) for a in vectors]
-            j = Mul(*args)
-
-        return Mul(i, j)
-
-    L = expr.subs({u: K})
     if isinstance(L, Derivative):
         f = L.args[0] ; args = list(L.variables)
         if isinstance(f, AppliedUndef):
@@ -107,10 +101,23 @@ def _evaluate(expr, u, K, xi, x):
 
         j = S.One
         if vectors:
-            args = [_evaluate(expr, u, a, xi, x) for a in vectors]
+            args = [_evaluate(a, u, K, xi, x) for a in vectors]
             j = Mul(*args)
 
         return Mul(i, j)
+
+    elif isinstance(expr, Pow):
+
+        if isinstance(expr.base, _coeffs_registery):
+            return expr
+        else:
+            raise NotImplementedError('')
+
+#            b = _evaluate(a, u, K, xi, x)
+#            b = atomize(expr.base, dim=dim)
+#            e = expr.exp
+#
+#            return Pow(b, e)
 
     else:
         print(L)
@@ -125,11 +132,27 @@ def evaluate(expr, u, K):
 
     variables = K.variables
     F = Function(K.name)
+
     for xis in variables:
         for xi, x in zip(xis, coordinates):
             if isinstance(F, Add):
                 args = [_evaluate(expr, u, f, xi, x) for f in F.args]
                 F = Add(*args)
+
+            elif isinstance(F, Mul):
+                coeffs  = [i for i in F.args if isinstance(i, _coeffs_registery)]
+                vectors = [i for i in F.args if not(i in coeffs)]
+
+                i = S.One
+                if coeffs:
+                    i = Mul(*coeffs)
+
+                j = S.One
+                if vectors:
+                    args = [_evaluate(a, u, K, xi, x) for a in vectors]
+                    j = Mul(*args)
+
+                F = Mul(i, j)
 
             else:
                 F = _evaluate(expr, u, F, xi, x)
