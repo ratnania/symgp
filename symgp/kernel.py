@@ -5,6 +5,7 @@ from sympy import Function, Derivative, Symbol
 from sympy import Tuple
 from sympy import Expr, Basic, Add
 from sympy.core.function import UndefinedFunction
+from sympy.core.function import AppliedUndef
 
 class Kernel(Expr):
 
@@ -54,20 +55,30 @@ class Kernel(Expr):
         return self._args[2]
 
 
-def evaluate_core(expr, u, K, xi, x):
+def _evaluate(expr, u, K, xi, x):
+
     if isinstance(expr, Add):
-        args = [evaluate_core(a, u, K, xi, x) for a in expr.args]
+        args = [_evaluate(a, u, K, xi, x) for a in expr.args]
         return Add(*args)
 
     L = expr.subs({u: K})
     if isinstance(L, Derivative):
         f = L.args[0] ; args = list(L.variables)
+        if isinstance(f, AppliedUndef):
+            f = f.func
+
         args = Tuple(*args)
         args = args.subs(x, xi)
         return Derivative(f, *args)
 
     elif isinstance(L, UndefinedFunction):
         return L(xi)
+
+    elif isinstance(L, AppliedUndef):
+        args = list(L.args)
+        args += [xi]
+        func = L.func
+        return func(*args)
 
     else:
         raise NotImplementedError('{}'.format(type(L)))
@@ -83,7 +94,12 @@ def evaluate(expr, u, K):
     F = Function(K.name)
     for xis in variables:
         for xi, x in zip(xis, coordinates):
-            F = evaluate_core(expr, u, F, xi, x)
+            if isinstance(F, Add):
+                args = [_evaluate(expr, u, f, xi, x) for f in F.args]
+                F = Add(*args)
+
+            else:
+                F = _evaluate(expr, u, F, xi, x)
 
     if K.expr:
         raise NotImplemented('TODO')
