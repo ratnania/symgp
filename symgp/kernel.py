@@ -11,45 +11,9 @@ from sympy.core.function import AppliedUndef
 
 class Kernel(Expr):
 
-    def __new__(cls, name, variables, expr=None):
-        # ...
-        if isinstance(variables, str):
-            variables = [Symbol(variables)]
+    def __new__(cls, name, expr=None):
 
-        elif isinstance(variables, Symbol):
-            variables = [variables]
-
-        if isinstance(variables, (tuple, list, Tuple)):
-            ls = []
-            for v in variables:
-                if isinstance(v, str):
-                    v = Symbol(v)
-                    v = [v]
-
-                elif isinstance(v, Symbol):
-                    v = [v]
-
-                elif isinstance(v, (tuple, list, Tuple)):
-                    for a in v:
-                        if not isinstance(a, (str, Symbol)):
-                            print(type(a))
-                            raise TypeError('expecing str or Symbol')
-
-                    vs = []
-                    for i in v:
-                        if isinstance(i, str):
-                            vs.append(Symbol(i))
-                        elif isinstance(i, Symbol):
-                            vs.append(i)
-                    v = vs
-
-                v = Tuple(*v)
-                ls.append(v)
-
-            variables = Tuple(*ls)
-        # ...
-
-        obj = Basic.__new__(cls, variables, expr)
+        obj = Basic.__new__(cls, expr)
         obj._name = name
         return obj
 
@@ -58,12 +22,8 @@ class Kernel(Expr):
         return self._name
 
     @property
-    def variables(self):
-        return self._args[0]
-
-    @property
     def expr(self):
-        return self._args[1]
+        return self._args[0]
 
 
 def _evaluate(expr, u, K, xi, x):
@@ -131,16 +91,51 @@ def _evaluate(expr, u, K, xi, x):
         print(L)
         raise NotImplementedError('{}'.format(type(L)))
 
-def evaluate(expr, u, K):
+def evaluate(expr, u, K, variables):
     if not isinstance(K, Kernel):
         raise TypeError('Expecting a Kernel')
 
     coordinates = ['x', 'y', 'z']
     coordinates = [Symbol(i) for i in coordinates]
 
-    variables = K.variables
-    F = Function(K.name)
+    # ...
+    if isinstance(variables, str):
+        variables = [Symbol(variables)]
 
+    elif isinstance(variables, Symbol):
+        variables = [variables]
+
+    if isinstance(variables, (tuple, list, Tuple)):
+        ls = []
+        for v in variables:
+            if isinstance(v, str):
+                v = Symbol(v)
+                v = [v]
+
+            elif isinstance(v, Symbol):
+                v = [v]
+
+            elif isinstance(v, (tuple, list, Tuple)):
+                for a in v:
+                    if not isinstance(a, (str, Symbol)):
+                        print(type(a))
+                        raise TypeError('expecing str or Symbol')
+
+                vs = []
+                for i in v:
+                    if isinstance(i, str):
+                        vs.append(Symbol(i))
+                    elif isinstance(i, Symbol):
+                        vs.append(i)
+                v = vs
+
+            v = Tuple(*v)
+            ls.append(v)
+
+        variables = Tuple(*ls)
+    # ...
+
+    F = Function(K.name)
     for xis in variables:
         xi = xis ; x = coordinates[:len(xis)]
 

@@ -24,17 +24,17 @@ def test_kernel_2d_1():
 
     # ...
     expected = k(xi, yi, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = k(xj, yj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = k(xi, yi, zi, xj, yj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_2():
@@ -42,17 +42,17 @@ def test_kernel_2d_2():
 
     # ...
     expected = Derivative(k, xi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xi, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_3():
@@ -60,17 +60,17 @@ def test_kernel_2d_3():
 
     # ...
     expected = Derivative(k, yi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yi, yj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_4():
@@ -78,17 +78,17 @@ def test_kernel_2d_4():
 
     # ...
     expected = Derivative(k, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, zi, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_5():
@@ -96,12 +96,12 @@ def test_kernel_2d_5():
 
     # ...
     expected = Derivative(k, xi) + Derivative(k, yi) + Derivative(k, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xj) + Derivative(k, yj) + Derivative(k, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
@@ -110,7 +110,7 @@ def test_kernel_2d_5():
                 Derivative(k, yi, yj) + Derivative(k, yi, zj) +
                 Derivative(k, zi, xj) + Derivative(k, zi, yj) +
                 Derivative(k, zi, zj))
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_6():
@@ -118,17 +118,17 @@ def test_kernel_2d_6():
 
     # ...
     expected = Derivative(k, xi, xi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xj, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xi, xi, xj, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_7():
@@ -136,17 +136,17 @@ def test_kernel_2d_7():
 
     # ...
     expected = Derivative(k, yi, yi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yj, yj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yi, yi, yj, yj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_8():
@@ -154,17 +154,17 @@ def test_kernel_2d_8():
 
     # ...
     expected = Derivative(k, zi, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,zi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, zj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,zj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, zi, zi, zj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,zi,zi), Tuple(xj,zj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_9():
@@ -172,17 +172,17 @@ def test_kernel_2d_9():
 
     # ...
     expected = Derivative(k, yi, xi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yj, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, yi, xi, yj, xj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_10():
@@ -190,12 +190,12 @@ def test_kernel_2d_10():
 
     # ...
     expected = Derivative(k, xi, xi) + Derivative(k, yi, yi) + Derivative(k, zi, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = Derivative(k, xj, xj) + Derivative(k, yj, yj) + Derivative(k, zj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
@@ -204,7 +204,7 @@ def test_kernel_2d_10():
                 Derivative(k, yi, yi, yj, yj) + Derivative(k, yi, yi, zj, zj) +
                 Derivative(k, zi, zi, xj, xj) + Derivative(k, zi, zi, yj, yj) +
                 Derivative(k, zi, zi, zj, zj))
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 def test_kernel_2d_11():
@@ -213,12 +213,12 @@ def test_kernel_2d_11():
 
     # ...
     expected = phi*k(xi, yi, zi) + Derivative(k, xi) + Derivative(k, yi) + Derivative(k, zi, zi)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi),)) == expected)
     # ...
 
     # ...
     expected = phi*k(xj, yj, zj) + Derivative(k, xj) + Derivative(k, yj) + Derivative(k, zj, zj)
-    assert(evaluate(L, u, Kernel('K', (Tuple(xj,yj,zj),))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xj,yj,zj),)) == expected)
     # ...
 
     # ...
@@ -228,7 +228,7 @@ def test_kernel_2d_11():
                 Derivative(k, yi, xj) + Derivative(k, yi, yj) + Derivative(k, xi, zj, zj) +
                 Derivative(k, yi, zj, zj) + Derivative(k, zi, zi, xj) +
                 Derivative(k, zi, zi, yj) + Derivative(k, zi, zi, zj, zj))
-    assert(evaluate(L, u, Kernel('K', (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))) == expected)
+    assert(evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj))) == expected)
     # ...
 
 ######################################
