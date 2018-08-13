@@ -10,6 +10,10 @@ from sympy import exp
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 from sympy import collect
+from sympy import lambdify
+from sympy import simplify
+
+from numpy import asarray, unique
 
 
 class KernelBase(Function):
@@ -249,6 +253,152 @@ def update_kernel(expr, kernel, variables):
     if isinstance(cls_name, RBF):
         expr = expr.subs(RBF(*variables), Symbol('RBF'))
         expr = collect(expr, Symbol('RBF'))
+
+        # ...
+        a = expr/Symbol('RBF')
+        a = simplify(a)
+        expr = a * Symbol('RBF')
+        # ...
+
         expr = expr.subs(Symbol('RBF'), RBF(*variables))
 
     return expr
+
+_template_1d = """
+def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+    from numpy import zeros
+    k = zeros((x1.size, x2.size))
+    for i in range(x1.size):
+        xi = x1[i]
+        for j in range(x2.size):
+            xj = x2[j]
+            k[i,j] = {__EXPR__}
+    return k
+"""
+
+def compile_kernels(expr, u, kernel, variables, namespace=globals()):
+    ldim = u.ldim
+    if ldim == 1:
+        xi,xj = variables
+        Xi = [xi] ; Xj = [xj]
+
+    elif ldim == 2:
+        xi,yi = variables[0]
+        xj,yj = variables[1]
+        Xi = [xi,yi] ; Xj = [xj,yj]
+
+    elif ldim == 3:
+        xi,yi,zi = variables[0]
+        xj,yj,zj = variables[1]
+        Xi = [xi,yi,zi] ; Xj = [xj,yj,zj]
+
+    positions = Xi + Xj
+
+    kuu = kernel(*variables)
+
+    K = evaluate(expr, u, Kernel('K'), xi)
+    kfu = update_kernel(K, RBF, (xi, xj))
+
+    K = evaluate(expr, u, Kernel('K'), xj)
+    kuf = update_kernel(K, RBF, (xi, xj))
+
+    K = evaluate(expr, u, Kernel('K'), (xi, xj))
+    kff = update_kernel(K, RBF, (xi, xj))
+
+    # ...
+    d_k = {}
+    d_k['kuu'] = kuu
+    d_k['kfu'] = kfu
+    d_k['kuf'] = kuf
+    d_k['kff'] = kff
+    # ...
+
+    # ...
+    if ldim == 1:
+        template = _template_1d
+
+    else:
+        raise NotImplementedError('')
+    # ...
+
+    d_fct = {}
+    d_args = {}
+    for kernel_name, k in list(d_k.items()):
+
+        args = [i for i in k.free_symbols if not(i in positions)]
+        args = asarray(['{}'.format(i.name) for i in args])
+        args.sort()
+        args_str = ', '.join(i for i in args)
+
+        expr = k
+        code = template.format(__KERNEL_NAME__=kernel_name, __ARGS__=args_str,
+                               __EXPR__=expr)
+
+        # ...
+        exec(code, namespace)
+        kernel = namespace[kernel_name]
+        # ...
+
+        d_fct[kernel_name] = kernel
+        d_args[kernel_name] = args
+
+    return d_fct, d_args
+
+
+_template_nlml = """
+def nlml(params, x1, x2, y1, y2, s):
+    import numpy as np
+    params = np.exp(params)
+{__ASSIGN_ARGS__}
+
+    K = np.block([
+        [
+            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s*np.identity(x1.size),
+            {__KUF__}(x1, x2, {__KUF_ARGS__})
+        ],
+        [
+            {__KFU__}(x1, x2, {__KFU_ARGS__}),
+            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s*np.identity(x2.size)
+        ]
+    ])
+    y = np.concatenate((y1, y2))
+    val = 0.5*(np.log(abs(np.linalg.det(K))) + np.mat(y) * np.linalg.inv(K) * np.mat(y).T)
+    return val.item(0)
+"""
+
+def compile_nlml(expr, u, kernel, variables, namespace=globals()):
+    d_fct, d_args = compile_kernels(expr, u, kernel, variables)
+    d_args_str = {}
+    for name, args in list(d_args.items()):
+        d_args_str[name] = ', '.join(i for i in args)
+
+    args = []
+    for name, values in list(d_args.items()):
+        args += [str(i) for i in values]
+
+    args = unique(args)
+    args.sort()
+
+    stmts = []
+    for i, a in enumerate(args):
+        pattern = '{__ARG__} = params[{i}]'
+        stmt = pattern.format(__ARG__=a, i=i)
+        stmts.append(stmt)
+
+    tab = ' '*4
+    assign_args_str = '\n'.join(tab + i for i in stmts)
+
+    template = _template_nlml
+    code = template.format(__KUU__='kuu', __KUU_ARGS__=d_args_str['kuu'],
+                           __KFU__='kfu', __KFU_ARGS__=d_args_str['kfu'],
+                           __KUF__='kuf', __KUF_ARGS__=d_args_str['kuf'],
+                           __KFF__='kff', __KFF_ARGS__=d_args_str['kff'],
+                           __ASSIGN_ARGS__=assign_args_str)
+
+    # ...
+    exec(code, namespace)
+    nlml = namespace['nlml']
+    # ...
+
+    return nlml
+
