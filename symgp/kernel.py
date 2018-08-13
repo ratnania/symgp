@@ -9,6 +9,7 @@ from sympy import S
 from sympy import exp
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
+from sympy import collect
 
 
 class KernelBase(Function):
@@ -206,10 +207,10 @@ def evaluate(expr, u, K, variables):
 
     return F
 
-def update_kernel(expr, kernel):
+def _update_kernel(expr, kernel):
 
     if isinstance(expr, Add):
-        args = [update_kernel(a, kernel) for a in expr.args]
+        args = [_update_kernel(a, kernel) for a in expr.args]
         return Add(*args)
 
     elif isinstance(expr, Mul):
@@ -222,7 +223,7 @@ def update_kernel(expr, kernel):
 
         j = S.One
         if vectors:
-            args = [update_kernel(a, kernel) for a in vectors]
+            args = [_update_kernel(a, kernel) for a in vectors]
             j = Mul(*args)
 
         return Mul(i, j)
@@ -238,5 +239,16 @@ def update_kernel(expr, kernel):
     elif isinstance(expr, AppliedUndef):
         # TODO use arguments
         return kernel
+
+    return expr
+
+def update_kernel(expr, kernel, variables):
+    expr = _update_kernel(expr, kernel(*variables))
+
+    cls_name = kernel(evaluate=False)
+    if isinstance(cls_name, RBF):
+        expr = expr.subs(RBF(*variables), Symbol('RBF'))
+        expr = collect(expr, Symbol('RBF'))
+        expr = expr.subs(Symbol('RBF'), RBF(*variables))
 
     return expr

@@ -24,7 +24,7 @@ def test_kernel_1d_1():
 
     # ...
     K = evaluate(L, u, Kernel('K'), xi)
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
     expected = theta*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
@@ -32,7 +32,7 @@ def test_kernel_1d_1():
 
     # ...
     K = evaluate(L, u, Kernel('K'), xj)
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
     expected = theta*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
@@ -40,7 +40,7 @@ def test_kernel_1d_1():
 
     # ...
     K = evaluate(L, u, Kernel('K'), (xi, xj))
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
     expected = theta*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
@@ -51,28 +51,25 @@ def test_kernel_1d_2():
 
     # ...
     K = evaluate(L, u, Kernel('K'), xi)
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
-    expected = alpha*theta*exp(-0.5*(xi - xj)**2) + theta*(-1.0*xi + 1.0*xj)*exp(-0.5*(xi - xj)**2)
+    expected = theta*(alpha - 1.0*xi + 1.0*xj)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
     # ...
     K = evaluate(L, u, Kernel('K'), xj)
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
-    expected = alpha*theta*exp(-0.5*(xi - xj)**2) + theta*(1.0*xi - 1.0*xj)*exp(-0.5*(xi - xj)**2)
+    expected = theta*(alpha + 1.0*xi - 1.0*xj)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
     # ...
     K = evaluate(L, u, Kernel('K'), (xi, xj))
-    K = update_kernel(K, RBF(xi, xj))
+    K = update_kernel(K, RBF, (xi, xj))
 
-    expected = (alpha**2*theta*exp(-0.5*(xi - xj)**2) +
-                alpha*theta*(-1.0*xi + 1.0*xj)*exp(-0.5*(xi - xj)**2) +
-                alpha*theta*(1.0*xi - 1.0*xj)*exp(-0.5*(xi - xj)**2) +
-                1.0*theta*(-(xi - xj)**2 + 1)*exp(-0.5*(xi - xj)**2))
+    expected = theta*(alpha**2 + alpha*(-1.0*xi + 1.0*xj) + alpha*(1.0*xi - 1.0*xj) - 1.0*(xi - xj)**2 + 1.0)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -82,20 +79,17 @@ if __name__ == '__main__':
     test_kernel_1d_1()
     test_kernel_1d_2()
 
-##    beta = Constant('beta')
-##    mu = Constant('mu')
-##    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
+#    L =  u
+#    L = dx(u) + alpha*u
 #
-#    L =  u #alpha*dx(u) + dx(dx(u))
-
 #    K = evaluate(L, u, Kernel('K'), xi)
-#    K = update_kernel(K, RBF(xi, xj))
+#    K = update_kernel(K, RBF, (xi, xj))
 #    print(K)
 #
 #    K = evaluate(L, u, Kernel('K'), xj)
-#    K = update_kernel(K, RBF(xi, xj))
+#    K = update_kernel(K, RBF, (xi, xj))
 #    print(K)
 #
 #    K = evaluate(L, u, Kernel('K'), (xi, xj))
-#    K = update_kernel(K, RBF(xi, xj))
+#    K = update_kernel(K, RBF, (xi, xj))
 #    print(K)
