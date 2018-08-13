@@ -6,44 +6,65 @@ from sympy import Function, Derivative, Symbol
 from sympy import Tuple
 from sympy import Expr, Basic, Add, Mul, Pow
 from sympy import S
+from sympy import exp
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 
-# TODO a Kernel must be an extension of Function
 
-class BasicKernel(Function):
-    _name = None
+class KernelBase(Function):
+    _name = 'K'
+
+    def __new__(cls, *args, **options):
+        obj = Function.__new__(cls, *args, **options)
+        return obj
 
     @property
     def name(self):
         return self._name
 
-class UndefinedKernel(BasicKernel):
 
-    def __new__(cls, name):
+class RBF(KernelBase):
+    _name = 'RBF'
 
-        obj = Basic.__new__(cls)
-        obj._name = name
-        return obj
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            theta = Constant('theta')
+            xi,xj = args
+            expr = theta*exp(-1/(2)*((xi - xj)**2))
+
+        elif ldim == 2:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr = exp(- theta_1 * (xi - xj)**2 - theta_2 * (yi - yj)**2)
+
+        elif ldim == 3:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            theta_3 = Constant('theta_3')
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr = exp(- theta_1 * (xi - xj)**2 - theta_2 * (yi - yj)**2 - theta_3 * (zi - zj)**2)
+
+        return expr
 
 
-class Kernel(BasicKernel):
-
-    def __new__(cls, name, expr=None):
-
-        if expr is None:
-            return UndefinedKernel.__new__(cls, name)
-
-        else:
-            raise NotImplementedError('')
-
-        obj = Basic.__new__(cls, expr)
-        obj._name = name
-        return obj
-
-    @property
-    def expr(self):
-        return self._args[0]
+Kernel = KernelBase
 
 
 def _evaluate(expr, u, K, xi, x):
@@ -112,8 +133,6 @@ def _evaluate(expr, u, K, xi, x):
         raise NotImplementedError('{}'.format(type(L)))
 
 def evaluate(expr, u, K, variables):
-    if not isinstance(K, Kernel):
-        raise TypeError('Expecting a Kernel')
 
     coordinates = ['x', 'y', 'z']
     coordinates = [Symbol(i) for i in coordinates]
@@ -187,9 +206,37 @@ def evaluate(expr, u, K, variables):
 
     return F
 
-    # TODO like Function/undefinedFunction in sympy
-#    if not isinstance(K, UndefinedKernel):
-#        raise NotImplementedError('TODO')
-#
-#    else:
-#        return F
+def update_kernel(expr, kernel):
+
+    if isinstance(expr, Add):
+        args = [update_kernel(a, kernel) for a in expr.args]
+        return Add(*args)
+
+    elif isinstance(expr, Mul):
+        coeffs  = [i for i in expr.args if isinstance(i, _coeffs_registery)]
+        vectors = [i for i in expr.args if not(i in coeffs)]
+
+        i = S.One
+        if coeffs:
+            i = Mul(*coeffs)
+
+        j = S.One
+        if vectors:
+            args = [update_kernel(a, kernel) for a in vectors]
+            j = Mul(*args)
+
+        return Mul(i, j)
+
+    elif isinstance(expr, Derivative):
+        f = expr.args[0] ; args = list(expr.variables)
+
+        args = Tuple(*args)
+        expr = Derivative(kernel, *args)
+        return expr.doit()
+    # ...
+
+    elif isinstance(expr, AppliedUndef):
+        # TODO use arguments
+        return kernel
+
+    return expr
