@@ -9,17 +9,35 @@ from sympy import S
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 
-class Kernel(Expr):
-
-    def __new__(cls, name, expr=None):
-
-        obj = Basic.__new__(cls, expr)
-        obj._name = name
-        return obj
+class BasicKernel(Expr):
+    _name = None
 
     @property
     def name(self):
         return self._name
+
+class UndefinedKernel(BasicKernel):
+
+    def __new__(cls, name):
+
+        obj = Basic.__new__(cls)
+        obj._name = name
+        return obj
+
+
+class Kernel(BasicKernel):
+
+    def __new__(cls, name, expr=None):
+
+        if expr is None:
+            return UndefinedKernel.__new__(cls, name)
+
+        else:
+            raise NotImplementedError('')
+
+        obj = Basic.__new__(cls, expr)
+        obj._name = name
+        return obj
 
     @property
     def expr(self):
@@ -161,8 +179,11 @@ def evaluate(expr, u, K, variables):
         else:
             F = _evaluate(expr, u, F, xi, x)
 
-    if K.expr:
-        raise NotImplemented('TODO')
+    return F
 
-    else:
-        return F
+    # TODO like Function/undefinedFunction in sympy
+#    if not isinstance(K, UndefinedKernel):
+#        raise NotImplementedError('TODO')
+#
+#    else:
+#        return F
