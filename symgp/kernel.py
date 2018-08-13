@@ -9,7 +9,9 @@ from sympy import S
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 
-class BasicKernel(Expr):
+# TODO a Kernel must be an extension of Function
+
+class BasicKernel(Function):
     _name = None
 
     @property
@@ -56,7 +58,7 @@ def _evaluate(expr, u, K, xi, x):
     except:
         L = expr
 
-#    print('> ', L)
+#    print('> ', L, type(L))
     if isinstance(L, Derivative):
         f = L.args[0] ; args = list(L.variables)
         if isinstance(f, AppliedUndef):
@@ -153,7 +155,11 @@ def evaluate(expr, u, K, variables):
         variables = Tuple(*ls)
     # ...
 
+    # ... TODO improve this. we should pass F = K, and it must work
+#    F = K
     F = Function(K.name)
+    # ...
+
     for xis in variables:
         xi = xis ; x = coordinates[:len(xis)]
 

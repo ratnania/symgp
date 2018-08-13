@@ -154,7 +154,9 @@ if __name__ == '__main__':
 #    alpha = Constant('alpha')
 #    mu = Constant('mu')
 #    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
-
+#
+#    L = dx(u)
+#
 #    Ki = evaluate(L, u, Kernel('K'), xi)
 #    print(Ki)
 #
