@@ -276,6 +276,18 @@ def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
     return k
 """
 
+_template_2d = """
+def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+    from numpy import zeros
+    k = zeros((x1.shape[0], x2.shape[0]))
+    for i in range(x1.shape[0]):
+        xi = x1[i, 0] ; yi = x1[i, 1]
+        for j in range(x2.shape[0]):
+            xj = x2[j, 0] ; yj = x2[j, 1]
+            k[i,j] = {__EXPR__}
+    return k
+"""
+
 def compile_kernels(expr, u, kernel, variables, namespace=globals()):
     ldim = u.ldim
     if ldim == 1:
@@ -296,14 +308,25 @@ def compile_kernels(expr, u, kernel, variables, namespace=globals()):
 
     kuu = kernel(*variables)
 
-    K = evaluate(expr, u, Kernel('K'), xi)
-    kfu = update_kernel(K, RBF, (xi, xj))
+    if ldim == 1:
+        K = evaluate(expr, u, Kernel('K'), xi)
+        kfu = update_kernel(K, RBF, (xi, xj))
 
-    K = evaluate(expr, u, Kernel('K'), xj)
-    kuf = update_kernel(K, RBF, (xi, xj))
+        K = evaluate(expr, u, Kernel('K'), xj)
+        kuf = update_kernel(K, RBF, (xi, xj))
 
-    K = evaluate(expr, u, Kernel('K'), (xi, xj))
-    kff = update_kernel(K, RBF, (xi, xj))
+        K = evaluate(expr, u, Kernel('K'), (xi, xj))
+        kff = update_kernel(K, RBF, (xi, xj))
+
+    elif ldim == 2:
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xi, yi)))
+        kfu = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
+
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xj, yj)))
+        kuf = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
+
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xi,yi), Tuple(xj,yj)))
+        kff = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
 
     # ...
     d_k = {}
@@ -316,6 +339,9 @@ def compile_kernels(expr, u, kernel, variables, namespace=globals()):
     # ...
     if ldim == 1:
         template = _template_1d
+
+    elif ldim == 2:
+        template = _template_2d
 
     else:
         raise NotImplementedError('')
@@ -335,6 +361,7 @@ def compile_kernels(expr, u, kernel, variables, namespace=globals()):
                                __EXPR__=expr)
 
         # ...
+#        print(code)
         exec(code, namespace)
         kernel = namespace[kernel_name]
         # ...
@@ -353,12 +380,12 @@ def nlml(params, x1, x2, y1, y2, s):
 
     K = np.block([
         [
-            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s*np.identity(x1.size),
+            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s*np.identity(x1.shape[0]),
             {__KUF__}(x1, x2, {__KUF_ARGS__})
         ],
         [
             {__KFU__}(x1, x2, {__KFU_ARGS__}),
-            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s*np.identity(x2.size)
+            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s*np.identity(x2.shape[0])
         ]
     ])
     y = np.concatenate((y1, y2))
@@ -388,7 +415,10 @@ def compile_nlml(expr, u, kernel, variables, namespace=globals()):
     tab = ' '*4
     assign_args_str = '\n'.join(tab + i for i in stmts)
 
+    # ...
     template = _template_nlml
+    # ...
+
     code = template.format(__KUU__='kuu', __KUU_ARGS__=d_args_str['kuu'],
                            __KFU__='kfu', __KFU_ARGS__=d_args_str['kfu'],
                            __KUF__='kuf', __KUF_ARGS__=d_args_str['kuf'],
@@ -396,6 +426,7 @@ def compile_nlml(expr, u, kernel, variables, namespace=globals()):
                            __ASSIGN_ARGS__=assign_args_str)
 
     # ...
+#    print(code)
     exec(code, namespace)
     nlml = namespace['nlml']
     # ...
