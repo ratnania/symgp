@@ -150,13 +150,16 @@ if __name__ == '__main__':
     test_kernel_1d_5()
     test_kernel_1d_6()
 
-    beta = Constant('beta')
-    alpha = Constant('alpha')
-    mu = Constant('mu')
-    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
+#    beta = Constant('beta')
+#    alpha = Constant('alpha')
+#    mu = Constant('mu')
+#    L = beta*dx(dx(u)) + alpha*dx(u) + mu*u
 
 #    Ki = evaluate(L, u, Kernel('K', xi))
 #    print(Ki)
+#
+#    Kj = evaluate(L, u, Kernel('K', xj))
+#    print(Kj)
 #
 #    Kij = evaluate(L, u, Kernel('K', (xi, xj)))
 #    print(Kij)
