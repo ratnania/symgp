@@ -288,27 +288,37 @@ def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
     return k
 """
 
-def compile_kernels(expr, u, kernel, variables, namespace=globals()):
+def compile_kernels(expr, u, kernel, namespace=globals()):
     ldim = u.ldim
     if ldim == 1:
-        xi,xj = variables
+        xi = Symbol('xi')
+        xj = Symbol('xj')
+
         Xi = [xi] ; Xj = [xj]
 
     elif ldim == 2:
-        xi,yi = variables[0]
-        xj,yj = variables[1]
+        xi = Symbol('xi')
+        yi = Symbol('yi')
+        xj = Symbol('xj')
+        yj = Symbol('yj')
+
         Xi = [xi,yi] ; Xj = [xj,yj]
 
     elif ldim == 3:
-        xi,yi,zi = variables[0]
-        xj,yj,zj = variables[1]
+        xi = Symbol('xi')
+        yi = Symbol('yi')
+        zi = Symbol('zi')
+        xj = Symbol('xj')
+        yj = Symbol('yj')
+        zj = Symbol('zj')
+
         Xi = [xi,yi,zi] ; Xj = [xj,yj,zj]
 
     positions = Xi + Xj
 
-    kuu = kernel(*variables)
-
     if ldim == 1:
+        kuu = kernel(xi, xj)
+
         K = evaluate(expr, u, Kernel('K'), xi)
         kfu = update_kernel(K, RBF, (xi, xj))
 
@@ -319,6 +329,8 @@ def compile_kernels(expr, u, kernel, variables, namespace=globals()):
         kff = update_kernel(K, RBF, (xi, xj))
 
     elif ldim == 2:
+        kuu = kernel(Tuple(xi,yi), Tuple(xj,yj))
+
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi, yi)))
         kfu = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
 
@@ -393,8 +405,8 @@ def nlml(params, x1, x2, y1, y2, s):
     return val.item(0)
 """
 
-def compile_nlml(expr, u, kernel, variables, namespace=globals()):
-    d_fct, d_args = compile_kernels(expr, u, kernel, variables)
+def compile_nlml(expr, u, kernel, namespace=globals()):
+    d_fct, d_args = compile_kernels(expr, u, kernel)
     d_args_str = {}
     for name, args in list(d_args.items()):
         d_args_str[name] = ', '.join(i for i in args)

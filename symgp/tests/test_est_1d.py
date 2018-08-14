@@ -10,8 +10,6 @@ from symgp.kernel import compile_nlml
 
 def test_est_1d_1():
     u = Unknown('u', ldim=1)
-    xi = Symbol('xi')
-    xj = Symbol('xj')
     phi = Constant('phi')
 
     # ... define a partial differential operator as a lambda function
@@ -20,7 +18,7 @@ def test_est_1d_1():
     # ...
 
     # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF, (xi, xj))
+    nlml = compile_nlml(L(u), u, RBF)
 
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
@@ -37,7 +35,7 @@ def test_est_1d_1():
     f_num = lambdify((x), f_sym, "numpy")
 
     x_u = linspace(0, 2*pi, 10)
-    x_f = linspace(0, 2*pi, 10)
+    x_f = x_u
 
     u = u_num(x_u)
     f = f_num(x_f)
