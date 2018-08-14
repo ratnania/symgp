@@ -133,6 +133,16 @@ def _evaluate(expr, u, K, xi, x):
 #
 #            return Pow(b, e)
 
+    elif isinstance(expr, Symbol):
+        coords = ['x', 'y', 'z']
+        coords = [Symbol(i) for i in coords]
+        if expr in coords:
+            i = coords.index(expr)
+            return xi[i]
+
+        else:
+            return expr
+
     else:
         print(L)
         raise NotImplementedError('{}'.format(type(L)))
@@ -466,6 +476,7 @@ def compile_nlml(expr, u, kernel, namespace=globals()):
 
     # ...
 #    print(code)
+#    import sys; sys.exit(0)
     exec(code, namespace)
     nlml = namespace['nlml']
     # ...
