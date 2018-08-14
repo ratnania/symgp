@@ -1,8 +1,11 @@
 # coding: utf-8
 from symfe import dx, Unknown, Constant
 from symfe.core.basic import _coeffs_registery
+from symfe.codegen.utils import known_math_functions, known_math_constants
+from symfe.codegen.utils import print_import_from_numpy
 
 from sympy import Function, Derivative, Symbol
+from sympy import NumberSymbol
 from sympy import Tuple
 from sympy import Expr, Basic, Add, Mul, Pow
 from sympy import S
@@ -12,6 +15,7 @@ from sympy.core.function import AppliedUndef
 from sympy import collect
 from sympy import lambdify
 from sympy import simplify
+from sympy import preorder_traversal
 
 from numpy import asarray, unique
 
@@ -102,6 +106,14 @@ def _evaluate(expr, u, K, xi, x):
     elif isinstance(L, AppliedUndef):
         args = list(L.args)
         args += xi
+        func = L.func
+        return func(*args)
+
+    elif isinstance(L, Function):
+        args = list(L.args)
+        args = Tuple(*args)
+        for _x, _xi in zip(x, xi):
+            args = args.subs(_x, _xi)
         func = L.func
         return func(*args)
 
@@ -276,6 +288,7 @@ def update_kernel(expr, kernel, variables):
 
 _template_1d = """
 def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+{__NUMPY_IMPORT__}
     from numpy import zeros
     k = zeros((x1.size, x2.size))
     for i in range(x1.size):
@@ -288,6 +301,7 @@ def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
 
 _template_2d = """
 def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+{__NUMPY_IMPORT__}
     from numpy import zeros
     k = zeros((x1.shape[0], x2.shape[0]))
     for i in range(x1.shape[0]):
@@ -300,6 +314,7 @@ def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
 
 _template_3d = """
 def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+{__NUMPY_IMPORT__}
     from numpy import zeros
     k = zeros((x1.shape[0], x2.shape[0]))
     for i in range(x1.shape[0]):
@@ -406,7 +421,23 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
         args_str = ', '.join(i for i in args)
 
         expr = k
-        code = template.format(__KERNEL_NAME__=kernel_name, __ARGS__=args_str,
+
+        # ... check if we find math functions in the expression
+        math_functions = [str(type(i)) for i in preorder_traversal(expr) if isinstance(i, Function)]
+        math_functions = [i for i in math_functions if i in known_math_functions]
+        math_functions = list(set(math_functions)) # remove redundancies
+
+        math_constants = [str(i) for i in preorder_traversal(expr) if isinstance(i, NumberSymbol)]
+        math_constants = [i for i in math_constants if i in known_math_constants]
+        math_constants = list(set(math_constants)) # remove redundancies
+
+        tab = ' '*4
+        numpy_import_str = print_import_from_numpy(math_functions+math_constants, tab)
+        # ...
+
+        code = template.format(__KERNEL_NAME__=kernel_name,
+                               __ARGS__=args_str,
+                               __NUMPY_IMPORT__=numpy_import_str,
                                __EXPR__=expr)
 
         # ...
