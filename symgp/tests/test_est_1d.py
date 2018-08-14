@@ -320,17 +320,11 @@ def test_est_1d_5():
     u = un(x_u)
     f = unew(x_f)
 
-    from numpy.linalg import norm
-    norm_u = norm(u)
-    norm_f = norm(f)
-    u = u/norm_u
-    f = f/norm_f
-
-#    from matplotlib import pyplot as plt
-#    plt.plot(u, label='u')
-#    plt.plot(f, label='f')
-#    plt.legend()
-#    plt.show()
+#    from numpy.linalg import norm
+#    norm_u = norm(u)
+#    norm_f = norm(f)
+#    u = u/norm_u
+#    f = f/norm_f
     # ...
 
     nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
@@ -343,29 +337,53 @@ def test_est_1d_5():
     from symgp.nelder_mead import nelder_mead
 
     x_start = rand(2)
+#    x_start[0] = log(0.1)
+#    print('> x_start = ', x_start)
+
+#    m = nelder_mead(nlml_wp, x_start,
+#                    step=.2, no_improve_thr=10e-3, no_improv_break=10,
+#                    max_iter=0,
+#                    alpha=[1., 1.],
+#                    gamma=[4., 2.],
+#                    rho=[-1., -0.5],
+#                    sigma=[1., 0.5],
+#                    verbose=False)
+#
+#    params = exp(m[0])
+#    phi_h = params[0]
+#    theta_h = params[1]
+#    print('> estimated nu = ', phi_h)
+#    print('> estimated theta = ', theta_h)
+    # ...
+
+    # ...
+    from scipy.optimize import minimize
+
+    x_start = rand(2)
     x_start[0] = log(0.1)
     print('> x_start = ', x_start)
 
-    m = nelder_mead(nlml_wp, x_start,
-                    step=.2, no_improve_thr=10e-3, no_improv_break=10,
-                    max_iter=0,
-                    alpha=[1., 1.],
-                    gamma=[4., 2.],
-                    rho=[-1., -0.5],
-                    sigma=[1., 0.5],
-                    verbose=False)
+    methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B',
+               'TNC', 'COBYLA']
+    phis = []
+    for method in methods:
+        print('> {} method in progress ... '.format(method))
+        m = minimize(nlml_wp, x_start, method=method)
+        params = exp(m.x)
 
-    params = exp(m[0])
-    phi_h = params[0]
-    theta_h = params[1]
-    print('> estimated nu = ', phi_h)
-    print('> estimated theta = ', theta_h)
+        phi_h = params[0]
+        phis.append(phi_h)
     # ...
+
+    from tabulate import tabulate
+    print(tabulate([phis], headers=methods))
+
+
 
 ######################################
 if __name__ == '__main__':
-    test_est_1d_1()
-    test_est_1d_2()
-    test_est_1d_3()
-    test_est_1d_4()
-#    test_est_1d_5()
+#    test_est_1d_1()
+#    test_est_1d_2()
+#    test_est_1d_3()
+#    test_est_1d_4()
+    test_est_1d_5()
