@@ -9,7 +9,7 @@ from sympy import NumberSymbol
 from sympy import Tuple
 from sympy import Expr, Basic, Add, Mul, Pow
 from sympy import S
-from sympy import exp
+from sympy import exp, sin, pi
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 from sympy import collect
@@ -118,6 +118,92 @@ class GRBF(KernelBase):
             expr = exp(- theta_1 * (xi - xj)**2/lx**2
                        - theta_2 * (yi - yj)**2/ly**2
                        - theta_3 * (zi - zj)**2/lz**2)
+
+        return expr
+
+class RQuad(KernelBase):
+    _name = 'RQuad'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            alpha = Constant('alpha')
+            lx = Constant('lx')
+            xi,xj = args
+            expr = (1 + (xi - xj)**2/(2*alpha*lx**2))**(-alpha)
+
+        else:
+            raise NotImplementedError('')
+
+        return expr
+
+class ExpSin(KernelBase):
+    _name = 'ExpSin'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            p = Constant('p')
+            lx = Constant('lx')
+            xi,xj = args
+            expr = exp(-2*sin((pi**2/p**2)*(xi - xj)**2/lx**2))
+
+        else:
+            raise NotImplementedError('')
+
+        return expr
+
+class DotProduct(KernelBase):
+    _name = 'DotProduct'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            sigma = Constant('sigma')
+            xi,xj = args
+            expr = sigma**2 + xi*xj
+
+        else:
+            raise NotImplementedError('')
 
         return expr
 
