@@ -8,8 +8,7 @@ from symfe import dx, dy, Unknown, Constant
 from symgp.kernel import RBF
 from symgp.kernel import compile_nlml
 
-######################################
-if __name__ == '__main__':
+def test_est_2d_1():
     u = Unknown('u', ldim=2)
     phi = Constant('phi')
 
@@ -53,11 +52,39 @@ if __name__ == '__main__':
 #    v = nlml((0.69, 1, 1), x, x, y_u, y_f, 1e-6)
 #    print(v)
 
-    from scipy.optimize import minimize
-    from numpy.random import rand
-    from numpy import exp
+#    from scipy.optimize import minimize
+#    from numpy.random import rand
+#    from numpy import exp
+#
+#    m = minimize(nlml_wp, rand(3), method="Nelder-Mead")
+#    phi_h = exp(m.x)
+#    print(phi_h)
+
 
     nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
-    m = minimize(nlml_wp, rand(3), method="Nelder-Mead")
-    phi_h = exp(m.x)
+
+    from numpy.random import rand
+    from numpy import exp
+    from time import time
+
+    # ... using pure python implementation
+    from symgp.nelder_mead import nelder_mead
+
+    tb = time()
+    m = nelder_mead(nlml_wp, rand(3),
+                    step=0.1, no_improve_thr=10e-6, no_improv_break=10,
+                    max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
+                    verbose=False)
+    te = time()
+    elapsed_python = te-tb
+
+    phi_h = exp(m[0])
     print(phi_h)
+
+    print('> elapsed time = ', elapsed_python)
+    # ...
+
+
+######################################
+if __name__ == '__main__':
+    test_est_2d_1()

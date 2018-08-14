@@ -44,15 +44,43 @@ def test_est_1d_1():
 #    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
 #    print(v)
 
-    from scipy.optimize import minimize
-    from numpy.random import rand
-    from numpy import exp
 
     nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+
+    from numpy.random import rand
+    from numpy import exp
+    from time import time
+
+    # ... using scipy
+    from scipy.optimize import minimize
+
+    tb = time()
     m = minimize(nlml_wp, rand(2), method="Nelder-Mead")
+    te = time()
+    elapsed_scipy = te-tb
+
     phi_h = exp(m.x)
     print(phi_h)
 
+    print('> elapsed time scipy  = ', elapsed_scipy)
+    # ...
+
+    # ... using pure python implementation
+    from symgp.nelder_mead import nelder_mead
+
+    tb = time()
+    m = nelder_mead(nlml_wp, rand(2),
+                    step=0.1, no_improve_thr=10e-6, no_improv_break=10,
+                    max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
+                    verbose=False)
+    te = time()
+    elapsed_python = te-tb
+
+    phi_h = exp(m[0])
+    print(phi_h)
+
+    print('> elapsed time python = ', elapsed_python)
+    # ...
 
 ######################################
 if __name__ == '__main__':
