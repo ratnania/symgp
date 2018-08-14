@@ -63,14 +63,15 @@ def test_est_2d_1():
 
     tb = time()
     x_start = rand(3)
-    x_start = ones(3)
-    x_start[0] = rand()
+#    x_start = ones(3)
+#    x_start[0] = rand()
 #    x_start[0] = 0.6
-    x_start[0] = 0.6
+#    x_start[0] = log(1.6)
     print('> x_start = ', x_start)
     m = nelder_mead(nlml_wp, x_start,
-                    step=0.1, no_improve_thr=10e-6, no_improv_break=10,
-                    max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
+                    step=0.1*x_start.max(), no_improve_thr=10e-4,
+                    no_improv_break=4,
+                    max_iter=0, alpha=.5, gamma=1.5, rho=-0.5, sigma=0.5,
                     verbose=True)
     te = time()
     elapsed_python = te-tb
