@@ -72,6 +72,55 @@ class RBF(KernelBase):
 
         return expr
 
+class GRBF(KernelBase):
+    _name = 'GRBF'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            theta = Constant('theta')
+            lx = Constant('lx')
+            xi,xj = args
+            expr = theta*exp(-1/(2)*((xi - xj)**2/lx**2))
+
+        elif ldim == 2:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            lx = Constant('lx')
+            ly = Constant('ly')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr = exp(- theta_1 * (xi - xj)**2/lx**2
+                       - theta_2 * (yi - yj)**2/ly**2)
+
+        elif ldim == 3:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            theta_3 = Constant('theta_3')
+            lx = Constant('lx')
+            ly = Constant('ly')
+            lz = Constant('lz')
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr = exp(- theta_1 * (xi - xj)**2/lx**2
+                       - theta_2 * (yi - yj)**2/ly**2
+                       - theta_3 * (zi - zj)**2/lz**2)
+
+        return expr
+
 
 Kernel = KernelBase
 
@@ -357,37 +406,37 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
         kuu = kernel(xi, xj)
 
         K = evaluate(expr, u, Kernel('K'), xi)
-        kfu = update_kernel(K, RBF, (xi, xj))
+        kfu = update_kernel(K, kernel, (xi, xj))
 
         K = evaluate(expr, u, Kernel('K'), xj)
-        kuf = update_kernel(K, RBF, (xi, xj))
+        kuf = update_kernel(K, kernel, (xi, xj))
 
         K = evaluate(expr, u, Kernel('K'), (xi, xj))
-        kff = update_kernel(K, RBF, (xi, xj))
+        kff = update_kernel(K, kernel, (xi, xj))
 
     elif ldim == 2:
         kuu = kernel(Tuple(xi,yi), Tuple(xj,yj))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi, yi)))
-        kfu = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
+        kfu = update_kernel(K, kernel, ((xi,yi), (xj,yj)))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xj, yj)))
-        kuf = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
+        kuf = update_kernel(K, kernel, ((xi,yi), (xj,yj)))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi,yi), Tuple(xj,yj)))
-        kff = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
+        kff = update_kernel(K, kernel, ((xi,yi), (xj,yj)))
 
     elif ldim == 3:
         kuu = kernel(Tuple(xi,yi,zi), Tuple(xj,yj,zj))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi, yi, zi)))
-        kfu = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+        kfu = update_kernel(K, kernel, ((xi,yi,zi), (xj,yj,zj)))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xj, yj, zj)))
-        kuf = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+        kuf = update_kernel(K, kernel, ((xi,yi,zi), (xj,yj,zj)))
 
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))
-        kff = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+        kff = update_kernel(K, kernel, ((xi,yi,zi), (xj,yj,zj)))
 
     # ...
     d_k = {}
