@@ -1,52 +1,61 @@
 # coding: utf-8
-from sympy import Function, Derivative, Symbol
+from sympy import Symbol
 from sympy import Tuple
-from sympy import Expr, Basic, Add
-from sympy.core.function import UndefinedFunction
-from sympy import exp
+from sympy import lambdify
 
 from symfe import dx, Unknown, Constant
 
 from symgp.kernel import RBF
-from symgp.kernel import compile_kernels
 from symgp.kernel import compile_nlml
 
+def test_est_1d_1():
+    u = Unknown('u', ldim=1)
+    xi = Symbol('xi')
+    xj = Symbol('xj')
+    phi = Constant('phi')
 
-u = Unknown('u', ldim=1)
-xi = Symbol('xi')
-xj = Symbol('xj')
-theta = Constant('theta')
-phi = Constant('phi')
+    # ... define a partial differential operator as a lambda function
+    L = lambda u: dx(u) + phi*u
+    L_expected = lambda u: dx(u) + 2.*u
+    # ...
 
+    # compute the likelihood
+    nlml = compile_nlml(L(u), u, RBF, (xi, xj))
 
+    # ... symbolic functions for unknown and rhs
+    from sympy.abc import x
+    from sympy import sin, cos
 
+    u_sym = sin(x)
+    f_sym = L_expected(u_sym)
+    # ...
 
-######################################
-if __name__ == '__main__':
+    # ... lambdification + evaluation
+    from numpy import linspace, pi
 
-    L = dx(u) + phi*u
+    u_num = lambdify((x), u_sym, "numpy")
+    f_num = lambdify((x), f_sym, "numpy")
 
-#    d = compile_kernels(L, u, RBF, (xi, xj))
-    nlml = compile_nlml(L, u, RBF, (xi, xj))
+    x_u = linspace(0, 2*pi, 10)
+    x_f = linspace(0, 2*pi, 10)
 
-#    K = evaluate(L, u, Kernel('K'), xi)
-#    K = update_kernel(K, RBF, (xi, xj))
-#    print(K)
-
-    import numpy as np
-    import sympy as sp
-    from scipy.optimize import minimize
-    import matplotlib.pyplot as plt
-
-    x_u = np.linspace(0,2*np.pi,10)
-    y_u = np.sin(x_u)
-    x_f = np.linspace(0,2*np.pi, 10)
-    y_f = 2.0*np.sin(x_f) + np.cos(x_f)
+    u = u_num(x_u)
+    f = f_num(x_f)
+    # ...
 
 #    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
 #    print(v)
 
-    nlml_wp = lambda params: nlml(params, x_u, x_f, y_u, y_f, 1e-6)
-    m = minimize(nlml_wp, np.random.rand(2), method="Nelder-Mead")
-    phi_h = np.exp(m.x)
+    from scipy.optimize import minimize
+    from numpy.random import rand
+    from numpy import exp
+
+    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+    m = minimize(nlml_wp, rand(2), method="Nelder-Mead")
+    phi_h = exp(m.x)
     print(phi_h)
+
+
+######################################
+if __name__ == '__main__':
+    test_est_1d_1()
