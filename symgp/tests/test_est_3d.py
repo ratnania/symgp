@@ -70,7 +70,7 @@ def test_est_3d_1():
                     step=0.1*x_start.max(), no_improve_thr=10e-4,
                     no_improv_break=4,
                     max_iter=0, alpha=.5, gamma=1.5, rho=-0.5, sigma=0.5,
-                    verbose=True)
+                    verbose=False)
     te = time()
     elapsed_python = te-tb
 

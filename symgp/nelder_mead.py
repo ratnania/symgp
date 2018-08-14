@@ -26,6 +26,39 @@ def nelder_mead(f, x_start,
         return: tuple (best parameter array, best score)
     '''
 
+    from numpy import ones_like, asarray
+    # ...
+    if isinstance(alpha, float):
+        alpha = alpha * ones_like(x_start)
+
+    elif isinstance(alpha, (list, tuple)):
+        alpha = asarray(alpha)
+    # ...
+
+    # ...
+    if isinstance(gamma, float):
+        gamma = gamma * ones_like(x_start)
+
+    elif isinstance(gamma, (list, tuple)):
+        gamma = asarray(gamma)
+    # ...
+
+    # ...
+    if isinstance(rho, float):
+        rho = rho * ones_like(x_start)
+
+    elif isinstance(rho, (list, tuple)):
+        rho = asarray(rho)
+    # ...
+
+    # ...
+    if isinstance(sigma, float):
+        sigma = sigma * ones_like(x_start)
+
+    elif isinstance(sigma, (list, tuple)):
+        sigma = asarray(sigma)
+    # ...
+
     # init
     dim = len(x_start)
     prev_best = f(x_start)

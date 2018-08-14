@@ -2,6 +2,7 @@
 from sympy import Symbol
 from sympy import Tuple
 from sympy import lambdify
+from sympy import Function
 
 from symfe import dx, Unknown, Constant
 
@@ -279,9 +280,92 @@ def test_est_1d_4():
     print('> elapsed time python = ', elapsed_python)
     # ...
 
+def test_est_1d_5():
+    """Explicit time step for Burgers"""
+
+    u = Unknown('u', ldim=1)
+    nu = Constant('nu')
+
+    # ... define a partial differential operator as a lambda function
+    from sympy.abc import x
+    from sympy import sin, cos
+
+    Dt = 0.0010995574287564279
+    nu_expected = 0.07
+
+    from numpy import genfromtxt
+    xn = genfromtxt('x.txt')
+    unew = genfromtxt('unew.txt')
+    un = genfromtxt('un.txt')
+#    un = genfromtxt('fn.txt')
+
+    from scipy.interpolate import interp1d
+    unew = interp1d(xn, unew)
+    un = interp1d(xn, un)
+
+    fn = Function('fn')
+
+    L = lambda u: u + Dt*fn(x)*dx(u) + nu*Dt*dx(dx(u))
+    # ...
+
+    # compute the likelihood
+    nlml = compile_nlml(L(u), u, RBF)
+
+    # ... lambdification + evaluation
+    from numpy import linspace, pi
+
+    x_u = linspace(0, 2*pi, 30)
+    x_f = x_u
+
+    u = un(x_u)
+    f = unew(x_f)
+
+    from numpy.linalg import norm
+    norm_u = norm(u)
+    norm_f = norm(f)
+    u = u/norm_u
+    f = f/norm_f
+
+#    from matplotlib import pyplot as plt
+#    plt.plot(u, label='u')
+#    plt.plot(f, label='f')
+#    plt.legend()
+#    plt.show()
+    # ...
+
+    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+
+    from numpy.random import rand
+    from numpy import exp, ones, log
+    from time import time
+
+    # ... using pure python implementation
+    from symgp.nelder_mead import nelder_mead
+
+    x_start = rand(2)
+    x_start[0] = log(0.1)
+    print('> x_start = ', x_start)
+
+    m = nelder_mead(nlml_wp, x_start,
+                    step=.2, no_improve_thr=10e-3, no_improv_break=10,
+                    max_iter=0,
+                    alpha=[1., 1.],
+                    gamma=[4., 2.],
+                    rho=[-1., -0.5],
+                    sigma=[1., 0.5],
+                    verbose=False)
+
+    params = exp(m[0])
+    phi_h = params[0]
+    theta_h = params[1]
+    print('> estimated nu = ', phi_h)
+    print('> estimated theta = ', theta_h)
+    # ...
+
 ######################################
 if __name__ == '__main__':
-#    test_est_1d_1()
-#    test_est_1d_2()
-#    test_est_1d_3()
+    test_est_1d_1()
+    test_est_1d_2()
+    test_est_1d_3()
     test_est_1d_4()
+#    test_est_1d_5()
