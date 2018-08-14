@@ -288,6 +288,18 @@ def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
     return k
 """
 
+_template_3d = """
+def {__KERNEL_NAME__}(x1, x2, {__ARGS__}):
+    from numpy import zeros
+    k = zeros((x1.shape[0], x2.shape[0]))
+    for i in range(x1.shape[0]):
+        xi = x1[i, 0] ; yi = x1[i, 1] ; zi = x1[i, 2]
+        for j in range(x2.shape[0]):
+            xj = x2[j, 0] ; yj = x2[j, 1] ; zj = x2[j, 2]
+            k[i,j] = {__EXPR__}
+    return k
+"""
+
 def compile_kernels(expr, u, kernel, namespace=globals()):
     ldim = u.ldim
     if ldim == 1:
@@ -340,6 +352,18 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
         K = evaluate(expr, u, Kernel('K'), (Tuple(xi,yi), Tuple(xj,yj)))
         kff = update_kernel(K, RBF, ((xi,yi), (xj,yj)))
 
+    elif ldim == 3:
+        kuu = kernel(Tuple(xi,yi,zi), Tuple(xj,yj,zj))
+
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xi, yi, zi)))
+        kfu = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xj, yj, zj)))
+        kuf = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+
+        K = evaluate(expr, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))
+        kff = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
+
     # ...
     d_k = {}
     d_k['kuu'] = kuu
@@ -354,6 +378,9 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
 
     elif ldim == 2:
         template = _template_2d
+
+    elif ldim == 3:
+        template = _template_3d
 
     else:
         raise NotImplementedError('')
