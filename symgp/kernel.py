@@ -646,19 +646,19 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
 
 
 _template_nlml = """
-def nlml(params, x1, x2, y1, y2, s):
+def nlml_func(params, x1, x2, y1, y2, s_u, s_f):
     import numpy as np
     params = np.exp(params)
 {__ASSIGN_ARGS__}
 
     K = np.block([
         [
-            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s*np.identity(x1.shape[0]),
+            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s_u*np.identity(x1.shape[0]),
             {__KUF__}(x1, x2, {__KUF_ARGS__})
         ],
         [
             {__KFU__}(x1, x2, {__KFU_ARGS__}),
-            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s*np.identity(x2.shape[0])
+            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s_f*np.identity(x2.shape[0])
         ]
     ])
     y = np.concatenate((y1, y2))
@@ -707,3 +707,115 @@ def compile_nlml(expr, u, kernel, namespace=globals()):
 
     return nlml
 
+class NLML(object):
+    def __init__(self, expr, u, kernel, namespace=globals()):
+
+        if isinstance(kernel, str):
+            kernel = eval(kernel)
+
+        self._func = self._compile_nlml(expr, u, kernel, namespace=namespace)
+
+    @property
+    def func(self):
+        return self._func
+
+    @property
+    def args(self):
+        return self._args
+
+    @property
+    def params(self):
+        return self._params
+
+    @property
+    def x_u(self):
+        return self._x_u
+
+    @property
+    def x_f(self):
+        return self._x_f
+
+    @property
+    def u(self):
+        return self._u
+
+    @property
+    def f(self):
+        return self._f
+
+    def set_u(self, x_u, u):
+        self._x_u = x_u
+        self._u   = u
+
+    def set_f(self, x_f, f):
+        self._x_f = x_f
+        self._f   = f
+
+    def map_args(self, values):
+        d = {}
+        for n,v in zip(self.args, values):
+            d[n] = v
+        return d
+
+    def _compile_nlml(self, expr, u, kernel, namespace=globals()):
+        d_fct, d_args = compile_kernels(expr, u, kernel)
+        d_args_str = {}
+        for name, args in list(d_args.items()):
+            d_args_str[name] = ', '.join(i for i in args)
+
+        args = []
+        for name, values in list(d_args.items()):
+            args += [str(i) for i in values]
+
+        args = unique(args)
+        args.sort()
+
+        # set args
+        self._args = args
+
+        # parametric variables
+        params = [i.name for i in expr.free_symbols if i.name in args]
+        self._params = params
+
+        stmts = []
+        for i, a in enumerate(args):
+            pattern = '{__ARG__} = params[{i}]'
+            stmt = pattern.format(__ARG__=a, i=i)
+            stmts.append(stmt)
+
+        tab = ' '*4
+        assign_args_str = '\n'.join(tab + i for i in stmts)
+
+        # ...
+        template = _template_nlml
+        # ...
+
+        code = template.format(__KUU__='kuu', __KUU_ARGS__=d_args_str['kuu'],
+                               __KFU__='kfu', __KFU_ARGS__=d_args_str['kfu'],
+                               __KUF__='kuf', __KUF_ARGS__=d_args_str['kuf'],
+                               __KFF__='kff', __KFF_ARGS__=d_args_str['kff'],
+                               __ASSIGN_ARGS__=assign_args_str)
+
+        # ...
+#        print(code)
+#        import sys; sys.exit(0)
+        exec(code, namespace)
+        nlml = namespace['nlml_func']
+        # ...
+
+        return nlml
+
+    def __call__(self, args, x_u=None, x_f=None, u=None, f=None, s_u=1.e-6, s_f=1.e-6):
+        if x_u is None:
+            x_u = self.x_u
+
+        if x_f is None:
+            x_f = self.x_f
+
+        if u is None:
+            u = self.u
+
+        if f is None:
+            f = self.f
+
+        return self.func(args, x_u, x_f, u, f, s_u, s_f)

@@ -289,12 +289,6 @@ def test_est_1d_5():
     L_expected = lambda u: dx(u) + 2.*u
     # ...
 
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, GRBF)
-#    nlml = compile_nlml(L(u), u, RQuad)
-#    nlml = compile_nlml(L(u), u, ExpSin)
-#    nlml = compile_nlml(L(u), u, DotProduct)
-
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
     from sympy import sin, cos
@@ -312,53 +306,60 @@ def test_est_1d_5():
     x_u = linspace(0, 2*pi, 10)
     x_f = x_u
 
-    u = u_num(x_u)
-    f = f_num(x_f)
+    us = u_num(x_u)
+    fs = f_num(x_f)
     # ...
-
-#    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
-#    print(v)
-
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
 
     from numpy.random import rand
     from numpy import exp, ones
     from time import time
 
-    x_start = rand(3)
-#    x_start = rand(2)
+    def solve(kernel):
+        print('>>>> using : ', kernel)
 
-    # ... using scipy
-    from scipy.optimize import minimize
+        # compute the likelihood
+        from symgp.kernel import NLML
+        nlml = NLML(L(u), u, kernel)
 
-    tb = time()
-    m = minimize(nlml_wp, x_start, method="Nelder-Mead")
-    te = time()
-    elapsed_scipy = te-tb
+        # set values
+        nlml.set_u(x_u, us)
+        nlml.set_f(x_f, fs)
 
-    phi_h = exp(m.x)
-    print(phi_h)
+        x_start = rand(len(nlml.args))
 
-    print('> elapsed time scipy  = ', elapsed_scipy)
+        # ... using scipy
+        from scipy.optimize import minimize
+
+        tb = time()
+        m = minimize(nlml, x_start, method="Nelder-Mead")
+        te = time()
+        elapsed_scipy = te-tb
+
+        args = exp(m.x)
+        print(nlml.map_args(args))
+
+        print('> elapsed time scipy  = ', elapsed_scipy)
+        # ...
+
+        # ... using pure python implementation
+        from symgp.nelder_mead import nelder_mead
+
+        tb = time()
+        m = nelder_mead(nlml, x_start,
+                        step=0.1, no_improve_thr=10e-6, no_improv_break=10,
+                        max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
+                        verbose=False)
+        te = time()
+        elapsed_python = te-tb
+
+        args = exp(m[0])
+        print(nlml.map_args(args))
+
+        print('> elapsed time python = ', elapsed_python)
     # ...
 
-    # ... using pure python implementation
-    from symgp.nelder_mead import nelder_mead
-
-    tb = time()
-    m = nelder_mead(nlml_wp, x_start,
-                    step=0.1, no_improve_thr=10e-6, no_improv_break=10,
-                    max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
-                    verbose=False)
-    te = time()
-    elapsed_python = te-tb
-
-    phi_h = exp(m[0])
-    print(phi_h)
-
-    print('> elapsed time python = ', elapsed_python)
-    # ...
+    for kernel in ['RBF', 'GRBF', 'RQuad', 'ExpSin', 'DotProduct']:
+        solve(kernel)
 
 def test_est_1d_6():
     """Explicit time step for Burgers"""
