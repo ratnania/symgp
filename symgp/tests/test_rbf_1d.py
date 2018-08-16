@@ -16,7 +16,7 @@ from symgp.kernel import update_kernel
 u = Unknown('u', ldim=1)
 xi = Symbol('xi')
 xj = Symbol('xj')
-theta = Constant('theta')
+theta_1 = Constant('theta_1')
 alpha = Constant('alpha')
 
 def test_kernel_1d_1():
@@ -26,7 +26,7 @@ def test_kernel_1d_1():
     K = evaluate(L, u, Kernel('K'), xi)
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -34,7 +34,7 @@ def test_kernel_1d_1():
     K = evaluate(L, u, Kernel('K'), xj)
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -42,7 +42,7 @@ def test_kernel_1d_1():
     K = evaluate(L, u, Kernel('K'), (xi, xj))
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -53,7 +53,7 @@ def test_kernel_1d_2():
     K = evaluate(L, u, Kernel('K'), xi)
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*(alpha - 1.0*xi + 1.0*xj)*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*(1.0*alpha - 1.0*xi + 1.0*xj)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -61,7 +61,7 @@ def test_kernel_1d_2():
     K = evaluate(L, u, Kernel('K'), xj)
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*(alpha + 1.0*xi - 1.0*xj)*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*(1.0*alpha + 1.0*xi - 1.0*xj)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 
@@ -69,7 +69,7 @@ def test_kernel_1d_2():
     K = evaluate(L, u, Kernel('K'), (xi, xj))
     K = update_kernel(K, RBF, (xi, xj))
 
-    expected = theta*(alpha**2 + alpha*(-1.0*xi + 1.0*xj) + alpha*(1.0*xi - 1.0*xj) - 1.0*(xi - xj)**2 + 1.0)*exp(-0.5*(xi - xj)**2)
+    expected = theta_1*(alpha**2 - 1.0*(xi - xj)**2 + 1.0)*exp(-0.5*(xi - xj)**2)
     assert(K == expected)
     # ...
 

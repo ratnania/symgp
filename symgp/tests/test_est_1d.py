@@ -6,7 +6,7 @@ from sympy import Function
 
 from symfe import dx, Unknown, Constant
 
-from symgp.kernel import RBF, GRBF, RQuad, ExpSin, DotProduct
+from symgp.kernel import RBF, SE, RQ, Periodic, Linear
 from symgp.kernel import compile_nlml
 
 def test_est_1d_1():
@@ -327,38 +327,19 @@ def test_est_1d_5():
 
         x_start = rand(len(nlml.args))
 
-        # ... using scipy
-        from scipy.optimize import minimize
-
-        tb = time()
-        m = minimize(nlml, x_start, method="Nelder-Mead")
-        te = time()
-        elapsed_scipy = te-tb
-
-        args = exp(m.x)
-        print(nlml.map_args(args))
-
-        print('> elapsed time scipy  = ', elapsed_scipy)
-        # ...
-
         # ... using pure python implementation
         from symgp.nelder_mead import nelder_mead
 
-        tb = time()
         m = nelder_mead(nlml, x_start,
                         step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                         max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
                         verbose=False)
-        te = time()
-        elapsed_python = te-tb
 
         args = exp(m[0])
-        print(nlml.map_args(args))
-
-        print('> elapsed time python = ', elapsed_python)
+        print('> estimated phi = ', nlml.map_args(args)['phi'])
     # ...
 
-    for kernel in ['RBF', 'GRBF', 'RQuad', 'ExpSin', 'DotProduct']:
+    for kernel in ['RBF', 'SE', 'RQ', 'Linear']:
         solve(kernel)
 
 def test_est_1d_6():
@@ -489,7 +470,7 @@ def test_est_1d_7():
     # ...
 
     # compute the likelihood
-    nlml = compile_nlml(L(u), u, GRBF)
+    nlml = compile_nlml(L(u), u, SE)
 
     # ... lambdification + evaluation
     from numpy import linspace, pi

@@ -9,7 +9,7 @@ from sympy import NumberSymbol
 from sympy import Tuple
 from sympy import Expr, Basic, Add, Mul, Pow
 from sympy import S
-from sympy import exp, sin, pi
+from sympy import exp, sin, pi, Abs
 from sympy.core.function import UndefinedFunction
 from sympy.core.function import AppliedUndef
 from sympy import collect
@@ -53,15 +53,15 @@ class RBF(KernelBase):
         if ldim == 1:
             theta_1 = Constant('theta_1')
             xi,xj = args
-            expr = theta_1*exp(-1/(2)*((xi - xj)**2))
+            expr = theta_1 * exp(-0.5*(xi - xj)**2)
 
         elif ldim == 2:
             theta_1 = Constant('theta_1')
             theta_2 = Constant('theta_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr_1 = exp(- theta_1 * (xi - xj)**2)
-            expr_2 = exp(- theta_2 * (yi - yj)**2)
+            expr_1 = theta_1 * exp(-0.5*(xi - xj)**2)
+            expr_2 = theta_2 * exp(-0.5*(yi - yj)**2)
             expr = expr_1 * expr_2
 
         elif ldim == 3:
@@ -70,15 +70,15 @@ class RBF(KernelBase):
             theta_3 = Constant('theta_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr_1 = exp(- theta_1 * (xi - xj)**2)
-            expr_2 = exp(- theta_2 * (yi - yj)**2)
-            expr_3 = exp(- theta_3 * (zi - zj)**2)
+            expr_1 = theta_1 * exp(-0.5*(xi - xj)**2)
+            expr_2 = theta_2 * exp(-0.5*(yi - yj)**2)
+            expr_3 = theta_3 * exp(-0.5*(zi - zj)**2)
             expr = expr_1 * expr_2 * expr_3
 
         return expr
 
-class GRBF(KernelBase):
-    _name = 'GRBF'
+class SE(KernelBase):
+    _name = 'SE'
 
     @classmethod
     def eval(cls, *args):
@@ -108,8 +108,8 @@ class GRBF(KernelBase):
             l_2 = Constant('l_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr_1 = exp(- theta_1 * (xi - xj)**2/l_1**2)
-            expr_2 = exp(- theta_2 * (yi - yj)**2/l_2**2)
+            expr_1 = theta_1 * exp(-0.5*(xi - xj)**2/l_1**2)
+            expr_2 = theta_2 * exp(-0.5*(yi - yj)**2/l_2**2)
             expr = expr_1 * expr_2
 
         elif ldim == 3:
@@ -121,15 +121,15 @@ class GRBF(KernelBase):
             l_3 = Constant('l_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr_1 = exp(- theta_1 * (xi - xj)**2/l_1**2)
-            expr_2 = exp(- theta_2 * (yi - yj)**2/l_2**2)
-            expr_3 = exp(- theta_3 * (zi - zj)**2/l_3**2)
+            expr_1 = theta_1 * exp(-0.5*(xi - xj)**2/l_1**2)
+            expr_2 = theta_2 * exp(-0.5*(yi - yj)**2/l_2**2)
+            expr_3 = theta_3 * exp(-0.5*(zi - zj)**2/l_3**2)
             expr = expr_1 * expr_2 * expr_3
 
         return expr
 
-class RQuad(KernelBase):
-    _name = 'RQuad'
+class RQ(KernelBase):
+    _name = 'RQ'
 
     @classmethod
     def eval(cls, *args):
@@ -149,18 +149,21 @@ class RQuad(KernelBase):
         if ldim == 1:
             alpha_1 = Constant('alpha_1')
             l_1 = Constant('l_1')
+            theta_1 = Constant('theta_1')
             xi,xj = args
-            expr = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
+            expr = theta_1 * (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
 
         elif ldim == 2:
             alpha_1 = Constant('alpha_1')
             alpha_2 = Constant('alpha_2')
             l_1 = Constant('l_1')
             l_2 = Constant('l_2')
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr_1 = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
-            expr_2 = (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
+            expr_1 = theta_1 * (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
+            expr_2 = theta_2 * (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
             expr = expr_1 * expr_2
 
         elif ldim == 3:
@@ -170,17 +173,20 @@ class RQuad(KernelBase):
             l_1 = Constant('l_1')
             l_2 = Constant('l_2')
             l_3 = Constant('l_3')
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            theta_3 = Constant('theta_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr_1 = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
-            expr_2 = (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
-            expr_3 = (1 + (zi - zj)**2/(2*alpha_3*l_3**2))**(-alpha_3)
+            expr_1 = theta_1 * (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
+            expr_2 = theta_2 * (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
+            expr_3 = theta_3 * (1 + (zi - zj)**2/(2*alpha_3*l_3**2))**(-alpha_3)
             expr = expr_1 * expr_2 * expr_3
 
         return expr
 
-class ExpSin(KernelBase):
-    _name = 'ExpSin'
+class Periodic(KernelBase):
+    _name = 'Periodic'
 
     @classmethod
     def eval(cls, *args):
@@ -197,11 +203,17 @@ class ExpSin(KernelBase):
         # TODO must check that all arguments are of the same type (Symbols or
         # tuples)
 
+        # TODO it would be good to have the distance with Abs too, but it is not
+        # working right now
+
+        raise NotImplementedError('')
+
         if ldim == 1:
             p_1 = Constant('p_1')
             l_1 = Constant('l_1')
+            theta_1 = Constant('theta_1')
             xi,xj = args
-            expr = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
+            expr = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
 
         elif ldim == 2:
             p_1 = Constant('p_1')
@@ -210,8 +222,10 @@ class ExpSin(KernelBase):
             l_2 = Constant('l_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr_1 = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
-            expr_2 = exp(-2*sin((pi**2/p_2**2)*(yi - yj)**2/l_2**2))
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            expr_1 = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
+            expr_2 = theta_2 * exp(-2*(sin(pi*Abs(yi - yj)/p_2))**2/l_2**2)
             expr = expr_1 * expr_2
 
         elif ldim == 3:
@@ -221,17 +235,20 @@ class ExpSin(KernelBase):
             l_1 = Constant('l_1')
             l_2 = Constant('l_2')
             l_3 = Constant('l_3')
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            theta_3 = Constant('theta_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr_1 = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
-            expr_2 = exp(-2*sin((pi**2/p_2**2)*(yi - yj)**2/l_2**2))
-            expr_3 = exp(-2*sin((pi**2/p_3**2)*(yi - yj)**2/l_3**2))
+            expr_1 = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
+            expr_2 = theta_2 * exp(-2*(sin(pi*Abs(yi - yj)/p_2))**2/l_2**2)
+            expr_3 = theta_3 * exp(-2*(sin(pi*Abs(zi - zj)/p_3))**2/l_3**2)
             expr = expr_1 * expr_2 * expr_3
 
         return expr
 
-class DotProduct(KernelBase):
-    _name = 'DotProduct'
+class Linear(KernelBase):
+    _name = 'Linear'
 
     @classmethod
     def eval(cls, *args):
@@ -248,20 +265,30 @@ class DotProduct(KernelBase):
         # TODO must check that all arguments are of the same type (Symbols or
         # tuples)
 
-        sigma = Constant('sigma')
+        sigma_b = Constant('sigma_b')
+        sigma_v = Constant('sigma_v')
         if ldim == 1:
+            c_1 = Constant('c_1')
             xi,xj = args
-            expr = sigma**2 + xi*xj
+            expr = sigma_b**2 + sigma_v**2*(xi-c_1)*(xj-c_1)
 
         elif ldim == 2:
+            c_1 = Constant('c_1')
+            c_2 = Constant('c_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr = sigma**2 + xi*xj + yi*yj
+            expr = sigma_b**2 + sigma_v**2*((xi-c_1)*(xj-c_1) +
+                                            (yi-c_2)*(yj-c_2))
 
         elif ldim == 3:
+            c_1 = Constant('c_1')
+            c_2 = Constant('c_2')
+            c_3 = Constant('c_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr = sigma**2 + xi*xj + yi*yj + zi*zj
+            expr = sigma_b**2 + sigma_v**2*((xi-c_1)*(xj-c_1) +
+                                            (yi-c_2)*(yj-c_2) +
+                                            (zi-c_3)*(zj-c_3))
 
         return expr
 

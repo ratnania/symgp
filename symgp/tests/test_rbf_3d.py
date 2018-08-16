@@ -4,6 +4,7 @@ from sympy import Tuple
 from sympy import Expr, Basic, Add
 from sympy.core.function import UndefinedFunction
 from sympy import exp
+from sympy import simplify
 
 from symfe import dx, dy, dz, Unknown, Constant
 
@@ -11,7 +12,6 @@ from symgp.kernel import Kernel
 from symgp.kernel import RBF
 from symgp.kernel import evaluate
 from symgp.kernel import update_kernel
-
 
 u = Unknown('u', ldim=3)
 xi = Symbol('xi')
@@ -32,7 +32,7 @@ def test_kernel_3d_1():
     K = evaluate(L, u, Kernel('K'), (Tuple(xi, yi, zi)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
+    expected = theta_1*theta_2*theta_3*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
     assert(K == expected)
     # ...
 
@@ -40,7 +40,7 @@ def test_kernel_3d_1():
     K = evaluate(L, u, Kernel('K'), (Tuple(xj, yj,zj)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
+    expected = theta_1*theta_2*theta_3*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
     assert(K == expected)
     # ...
 
@@ -48,7 +48,7 @@ def test_kernel_3d_1():
     K = evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
+    expected = theta_1*theta_2*theta_3*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
     assert(K == expected)
     # ...
 
@@ -59,34 +59,24 @@ def test_kernel_3d_2():
     K = evaluate(L, u, Kernel('K'), (Tuple(xi, yi, zi)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = (phi**3 - phi**2*theta_1*(2*xi - 2*xj) - phi**2*theta_2*(2*yi - 2*yj) - phi**2*theta_3*(2*zi - 2*zj) + 4*phi*theta_1*theta_2*(xi - xj)*(yi - yj) + 4*phi*theta_1*theta_3*(xi - xj)*(zi - zj) + 4*phi*theta_2*theta_3*(yi - yj)*(zi - zj) - 8*theta_1*theta_2*theta_3*(xi - xj)*(yi - yj)*(zi - zj))*exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
-    assert(K == expected)
+    expected = theta_1*theta_2*theta_3*(phi**3 + 1.0*phi**2*(-xi + xj) + 1.0*phi**2*(-yi + yj) + 1.0*phi**2*(-zi + zj) + 1.0*phi*(xi - xj)*(yi - yj) + 1.0*phi*(xi - xj)*(zi - zj) + 1.0*phi*(yi - yj)*(zi - zj) - 1.0*(xi - xj)*(yi - yj)*(zi - zj))*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
+    assert(simplify(K - expected) == 0)
     # ...
 
     # ...
     K = evaluate(L, u, Kernel('K'), (Tuple(xj, yj,zj)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = (phi**3 - phi**2*theta_1*(-2*xi + 2*xj) - phi**2*theta_2*(-2*yi + 2*yj) - phi**2*theta_3*(-2*zi + 2*zj) + 4*phi*theta_1*theta_2*(xi - xj)*(yi - yj) + 4*phi*theta_1*theta_3*(xi - xj)*(zi - zj) + 4*phi*theta_2*theta_3*(yi - yj)*(zi - zj) + 8*theta_1*theta_2*theta_3*(xi - xj)*(yi - yj)*(zi - zj))*exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
-    assert(K == expected)
+    expected = theta_1*theta_2*theta_3*(phi**3 + 1.0*phi**2*(xi - xj) + 1.0*phi**2*(yi - yj) + 1.0*phi**2*(zi - zj) + 1.0*phi*(xi - xj)*(yi - yj) + 1.0*phi*(xi - xj)*(zi - zj) + 1.0*phi*(yi - yj)*(zi - zj) + 1.0*(xi - xj)*(yi - yj)*(zi - zj))*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
+    assert(simplify(K - expected) == 0)
     # ...
 
     # ...
     K = evaluate(L, u, Kernel('K'), (Tuple(xi,yi,zi), Tuple(xj,yj,zj)))
     K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
 
-    expected = (phi**2 - phi*theta_1*(-2*xi + 2*xj) - phi*theta_1*(2*xi - 2*xj) - phi*theta_2*(-2*yi + 2*yj) -
-                phi*theta_2*(2*yi - 2*yj) + 4*phi*theta_3*(2*theta_3*(zi - zj)**2 - 1) -
-                8*theta_1*theta_2*(xi - xj)*(yi - yj) +
-                4*theta_1*theta_3*(xi - xj)*(-2*theta_3*(zi - zj)**2 + 1) +
-                4*theta_1*theta_3*(xi - xj)*(2*theta_3*(zi - zj)**2 - 1) +
-                2*theta_1*(-2*theta_1*(xi - xj)**2 + 1) +
-                4*theta_2*theta_3*(yi - yj)*(-2*theta_3*(zi - zj)**2 + 1) +
-                4*theta_2*theta_3*(yi - yj)*(2*theta_3*(zi - zj)**2 - 1) +
-                2*theta_2*(-2*theta_2*(yi - yj)**2 + 1) +
-                4*theta_3**2*(4*theta_3**2*(zi - zj)**4 -
-                              12*theta_3*(zi - zj)**2 + 3))*exp(-theta_1*(xi - xj)**2 - theta_2*(yi - yj)**2 - theta_3*(zi - zj)**2)
-    assert(K == expected)
+    expected = theta_1*theta_2*theta_3*(phi**2 + 2.0*phi*((zi - zj)**2 - 1) - 1.0*(xi - xj)**2 - 2.0*(xi - xj)*(yi - yj) - 1.0*(yi - yj)**2 + 1.0*(zi - zj)**4 - 6.0*(zi - zj)**2 + 5.0)*exp(-0.5*(xi - xj)**2)*exp(-0.5*(yi - yj)**2)*exp(-0.5*(zi - zj)**2)
+    assert(simplify(K - expected) == 0)
     # ...
 
 ######################################
@@ -95,8 +85,8 @@ if __name__ == '__main__':
     test_kernel_3d_1()
     test_kernel_3d_2()
 
-#    L = phi * u + dx(u) + dy(u) + dz(dz(u))
 ##    L = u
+#    L = phi * u + dx(u) + dy(u) + dz(dz(u))
 #
 #    K = evaluate(L, u, Kernel('K'), (Tuple(xi, yi, zi)))
 #    K = update_kernel(K, RBF, ((xi,yi,zi), (xj,yj,zj)))
