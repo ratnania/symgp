@@ -290,10 +290,10 @@ def test_est_1d_5():
     # ...
 
     # compute the likelihood
-#    nlml = compile_nlml(L(u), u, GRBF)
+    nlml = compile_nlml(L(u), u, GRBF)
 #    nlml = compile_nlml(L(u), u, RQuad)
 #    nlml = compile_nlml(L(u), u, ExpSin)
-    nlml = compile_nlml(L(u), u, DotProduct)
+#    nlml = compile_nlml(L(u), u, DotProduct)
 
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
@@ -326,12 +326,14 @@ def test_est_1d_5():
     from numpy import exp, ones
     from time import time
 
+    x_start = rand(3)
+#    x_start = rand(2)
+
     # ... using scipy
     from scipy.optimize import minimize
 
     tb = time()
-#    m = minimize(nlml_wp, rand(3), method="Nelder-Mead")
-    m = minimize(nlml_wp, rand(2), method="Nelder-Mead")
+    m = minimize(nlml_wp, x_start, method="Nelder-Mead")
     te = time()
     elapsed_scipy = te-tb
 
@@ -345,8 +347,6 @@ def test_est_1d_5():
     from symgp.nelder_mead import nelder_mead
 
     tb = time()
-#    x_start = ones(3)
-    x_start = ones(2)
     m = nelder_mead(nlml_wp, x_start,
                     step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                     max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,

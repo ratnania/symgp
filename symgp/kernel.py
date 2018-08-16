@@ -51,16 +51,18 @@ class RBF(KernelBase):
         # tuples)
 
         if ldim == 1:
-            theta = Constant('theta')
+            theta_1 = Constant('theta_1')
             xi,xj = args
-            expr = theta*exp(-1/(2)*((xi - xj)**2))
+            expr = theta_1*exp(-1/(2)*((xi - xj)**2))
 
         elif ldim == 2:
             theta_1 = Constant('theta_1')
             theta_2 = Constant('theta_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr = exp(- theta_1 * (xi - xj)**2 - theta_2 * (yi - yj)**2)
+            expr_1 = exp(- theta_1 * (xi - xj)**2)
+            expr_2 = exp(- theta_2 * (yi - yj)**2)
+            expr = expr_1 * expr_2
 
         elif ldim == 3:
             theta_1 = Constant('theta_1')
@@ -68,7 +70,10 @@ class RBF(KernelBase):
             theta_3 = Constant('theta_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr = exp(- theta_1 * (xi - xj)**2 - theta_2 * (yi - yj)**2 - theta_3 * (zi - zj)**2)
+            expr_1 = exp(- theta_1 * (xi - xj)**2)
+            expr_2 = exp(- theta_2 * (yi - yj)**2)
+            expr_3 = exp(- theta_3 * (zi - zj)**2)
+            expr = expr_1 * expr_2 * expr_3
 
         return expr
 
@@ -91,33 +96,35 @@ class GRBF(KernelBase):
         # tuples)
 
         if ldim == 1:
-            theta = Constant('theta')
-            lx = Constant('lx')
+            theta_1 = Constant('theta_1')
+            l_1 = Constant('l_1')
             xi,xj = args
-            expr = theta*exp(-1/(2)*((xi - xj)**2/lx**2))
+            expr = theta_1*exp(-1/(2)*((xi - xj)**2/l_1**2))
 
         elif ldim == 2:
             theta_1 = Constant('theta_1')
             theta_2 = Constant('theta_2')
-            lx = Constant('lx')
-            ly = Constant('ly')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr = exp(- theta_1 * (xi - xj)**2/lx**2
-                       - theta_2 * (yi - yj)**2/ly**2)
+            expr_1 = exp(- theta_1 * (xi - xj)**2/l_1**2)
+            expr_2 = exp(- theta_2 * (yi - yj)**2/l_2**2)
+            expr = expr_1 * expr_2
 
         elif ldim == 3:
             theta_1 = Constant('theta_1')
             theta_2 = Constant('theta_2')
             theta_3 = Constant('theta_3')
-            lx = Constant('lx')
-            ly = Constant('ly')
-            lz = Constant('lz')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            l_3 = Constant('l_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr = exp(- theta_1 * (xi - xj)**2/lx**2
-                       - theta_2 * (yi - yj)**2/ly**2
-                       - theta_3 * (zi - zj)**2/lz**2)
+            expr_1 = exp(- theta_1 * (xi - xj)**2/l_1**2)
+            expr_2 = exp(- theta_2 * (yi - yj)**2/l_2**2)
+            expr_3 = exp(- theta_3 * (zi - zj)**2/l_3**2)
+            expr = expr_1 * expr_2 * expr_3
 
         return expr
 
@@ -140,13 +147,35 @@ class RQuad(KernelBase):
         # tuples)
 
         if ldim == 1:
-            alpha = Constant('alpha')
-            lx = Constant('lx')
+            alpha_1 = Constant('alpha_1')
+            l_1 = Constant('l_1')
             xi,xj = args
-            expr = (1 + (xi - xj)**2/(2*alpha*lx**2))**(-alpha)
+            expr = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
 
-        else:
-            raise NotImplementedError('')
+        elif ldim == 2:
+            alpha_1 = Constant('alpha_1')
+            alpha_2 = Constant('alpha_2')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr_1 = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
+            expr_2 = (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
+            expr = expr_1 * expr_2
+
+        elif ldim == 3:
+            alpha_1 = Constant('alpha_1')
+            alpha_2 = Constant('alpha_2')
+            alpha_3 = Constant('alpha_3')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            l_3 = Constant('l_3')
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr_1 = (1 + (xi - xj)**2/(2*alpha_1*l_1**2))**(-alpha_1)
+            expr_2 = (1 + (yi - yj)**2/(2*alpha_2*l_2**2))**(-alpha_2)
+            expr_3 = (1 + (zi - zj)**2/(2*alpha_3*l_3**2))**(-alpha_3)
+            expr = expr_1 * expr_2 * expr_3
 
         return expr
 
@@ -169,13 +198,35 @@ class ExpSin(KernelBase):
         # tuples)
 
         if ldim == 1:
-            p = Constant('p')
-            lx = Constant('lx')
+            p_1 = Constant('p_1')
+            l_1 = Constant('l_1')
             xi,xj = args
-            expr = exp(-2*sin((pi**2/p**2)*(xi - xj)**2/lx**2))
+            expr = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
 
-        else:
-            raise NotImplementedError('')
+        elif ldim == 2:
+            p_1 = Constant('p_1')
+            p_2 = Constant('p_2')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr_1 = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
+            expr_2 = exp(-2*sin((pi**2/p_2**2)*(yi - yj)**2/l_2**2))
+            expr = expr_1 * expr_2
+
+        elif ldim == 3:
+            p_1 = Constant('p_1')
+            p_2 = Constant('p_2')
+            p_3 = Constant('p_3')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            l_3 = Constant('l_3')
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr_1 = exp(-2*sin((pi**2/p_1**2)*(xi - xj)**2/l_1**2))
+            expr_2 = exp(-2*sin((pi**2/p_2**2)*(yi - yj)**2/l_2**2))
+            expr_3 = exp(-2*sin((pi**2/p_3**2)*(yi - yj)**2/l_3**2))
+            expr = expr_1 * expr_2 * expr_3
 
         return expr
 
@@ -197,13 +248,20 @@ class DotProduct(KernelBase):
         # TODO must check that all arguments are of the same type (Symbols or
         # tuples)
 
+        sigma = Constant('sigma')
         if ldim == 1:
-            sigma = Constant('sigma')
             xi,xj = args
             expr = sigma**2 + xi*xj
 
-        else:
-            raise NotImplementedError('')
+        elif ldim == 2:
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr = sigma**2 + xi*xj + yi*yj
+
+        elif ldim == 3:
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr = sigma**2 + xi*xj + yi*yj + zi*zj
 
         return expr
 
