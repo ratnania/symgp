@@ -337,9 +337,10 @@ def test_est_1d_5():
 
         args = exp(m[0])
         print('> estimated phi = ', nlml.map_args(args)['phi'])
+#        print('> estimated args = ', nlml.map_args(args))
     # ...
 
-    for kernel in ['RBF', 'SE', 'RQ', 'Linear']:
+    for kernel in ['RBF', 'SE', 'GammaSE', 'RQ', 'Linear', 'Periodic']:
         solve(kernel)
 
 def test_est_1d_6():

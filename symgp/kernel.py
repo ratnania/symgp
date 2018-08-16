@@ -128,6 +128,63 @@ class SE(KernelBase):
 
         return expr
 
+class GammaSE(KernelBase):
+    _name = 'GammaSE'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            theta_1 = Constant('theta_1')
+            gamma_1 = Constant('gamma_1')
+            l_1 = Constant('l_1')
+            xi,xj = args
+            expr = theta_1*exp(-1/(2)*(((xi - xj)**2)**(gamma_1/2)/l_1**2))
+
+        elif ldim == 2:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            gamma_1 = Constant('gamma_1')
+            gamma_2 = Constant('gamma_2')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr_1 = theta_1 * exp(-0.5*((xi - xj)**2)**(gamma_1/2)/l_1**2)
+            expr_2 = theta_2 * exp(-0.5*((yi - yj)**2)**(gamma_2/2)/l_2**2)
+            expr = expr_1 * expr_2
+
+        elif ldim == 3:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            theta_3 = Constant('theta_3')
+            gamma_1 = Constant('gamma_1')
+            gamma_2 = Constant('gamma_2')
+            gamma_3 = Constant('gamma_3')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            l_3 = Constant('l_3')
+            xi,yi,zi = args[0]
+            xj,yj,zj = args[1]
+            expr_1 = theta_1 * exp(-0.5*((xi - xj)**2)**(gamma_1/2)/l_1**2)
+            expr_2 = theta_2 * exp(-0.5*((yi - yj)**2)**(gamma_2/2)/l_2**2)
+            expr_3 = theta_3 * exp(-0.5*((zi - zj)**2)**(gamma_3/2)/l_3**2)
+            expr = expr_1 * expr_2 * expr_3
+
+        return expr
+
 class RQ(KernelBase):
     _name = 'RQ'
 
@@ -203,17 +260,12 @@ class Periodic(KernelBase):
         # TODO must check that all arguments are of the same type (Symbols or
         # tuples)
 
-        # TODO it would be good to have the distance with Abs too, but it is not
-        # working right now
-
-        raise NotImplementedError('')
-
         if ldim == 1:
             p_1 = Constant('p_1')
             l_1 = Constant('l_1')
             theta_1 = Constant('theta_1')
             xi,xj = args
-            expr = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
+            expr = theta_1 * exp(-2*(sin(pi*(xi - xj)/p_1))**2/l_1**2)
 
         elif ldim == 2:
             p_1 = Constant('p_1')
@@ -224,8 +276,8 @@ class Periodic(KernelBase):
             xj,yj = args[1]
             theta_1 = Constant('theta_1')
             theta_2 = Constant('theta_2')
-            expr_1 = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
-            expr_2 = theta_2 * exp(-2*(sin(pi*Abs(yi - yj)/p_2))**2/l_2**2)
+            expr_1 = theta_1 * exp(-2*(sin(pi*(xi - xj)/p_1))**2/l_1**2)
+            expr_2 = theta_2 * exp(-2*(sin(pi*(yi - yj)/p_2))**2/l_2**2)
             expr = expr_1 * expr_2
 
         elif ldim == 3:
@@ -240,9 +292,9 @@ class Periodic(KernelBase):
             theta_3 = Constant('theta_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr_1 = theta_1 * exp(-2*(sin(pi*Abs(xi - xj)/p_1))**2/l_1**2)
-            expr_2 = theta_2 * exp(-2*(sin(pi*Abs(yi - yj)/p_2))**2/l_2**2)
-            expr_3 = theta_3 * exp(-2*(sin(pi*Abs(zi - zj)/p_3))**2/l_3**2)
+            expr_1 = theta_1 * exp(-2*(sin(pi*(xi - xj)/p_1))**2/l_1**2)
+            expr_2 = theta_2 * exp(-2*(sin(pi*(yi - yj)/p_2))**2/l_2**2)
+            expr_3 = theta_3 * exp(-2*(sin(pi*(zi - zj)/p_3))**2/l_3**2)
             expr = expr_1 * expr_2 * expr_3
 
         return expr
@@ -265,20 +317,20 @@ class Linear(KernelBase):
         # TODO must check that all arguments are of the same type (Symbols or
         # tuples)
 
-        sigma_b = Constant('sigma_b')
-        sigma_v = Constant('sigma_v')
+        theta_b = Constant('theta_b')
+        theta_v = Constant('theta_v')
         if ldim == 1:
             c_1 = Constant('c_1')
             xi,xj = args
-            expr = sigma_b**2 + sigma_v**2*(xi-c_1)*(xj-c_1)
+            expr = theta_b + theta_v*(xi-c_1)*(xj-c_1)
 
         elif ldim == 2:
             c_1 = Constant('c_1')
             c_2 = Constant('c_2')
             xi,yi = args[0]
             xj,yj = args[1]
-            expr = sigma_b**2 + sigma_v**2*((xi-c_1)*(xj-c_1) +
-                                            (yi-c_2)*(yj-c_2))
+            expr = theta_b + theta_v*((xi-c_1)*(xj-c_1) +
+                                      (yi-c_2)*(yj-c_2))
 
         elif ldim == 3:
             c_1 = Constant('c_1')
@@ -286,9 +338,9 @@ class Linear(KernelBase):
             c_3 = Constant('c_3')
             xi,yi,zi = args[0]
             xj,yj,zj = args[1]
-            expr = sigma_b**2 + sigma_v**2*((xi-c_1)*(xj-c_1) +
-                                            (yi-c_2)*(yj-c_2) +
-                                            (zi-c_3)*(zj-c_3))
+            expr = theta_b + theta_v*((xi-c_1)*(xj-c_1) +
+                                      (yi-c_2)*(yj-c_2) +
+                                      (zi-c_3)*(zj-c_3))
 
         return expr
 
