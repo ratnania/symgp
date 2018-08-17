@@ -363,8 +363,12 @@ def test_est_1d_6():
 
     # ... lambdification + evaluation
     from numpy import linspace, pi
+    from numpy.random import rand
 
-    x_u = linspace(0, 2*pi, 30)
+#    x_u = linspace(0, 2*pi, 30)
+
+    x_u = rand(100) * 2*pi
+
     x_f = x_u
 
     us = un(x_u)
@@ -392,7 +396,7 @@ def test_est_1d_6():
 
 #        methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B', 'TNC', 'COBYLA']
 #        methods = ['Nelder-Mead', 'Powell', 'CG']
-        methods = ['CG']
+        methods = ['Nelder-Mead']
         phis = []
         for method in methods:
             print('> {} method in progress ... '.format(method))
@@ -408,15 +412,85 @@ def test_est_1d_6():
 
 #    for kernel in ['RBF', 'SE', 'GammaSE', 'RQ', 'Linear', 'Periodic']:
 #    for kernel in ['RBF', 'SE']:
-    for kernel in ['RBF']:
+    for kernel in ['SE']:
         solve(kernel)
+
+def test_est_1d_7():
+    """Explicit time step for Burgers"""
+
+    u = Unknown('u', ldim=1)
+    nu = Constant('nu')
+
+    # ... define a partial differential operator as a lambda function
+    from sympy.abc import x
+    from sympy import sin, cos
+
+    Dt = 0.0010995574287564279
+    nu_expected = 0.07
+
+    from numpy import genfromtxt
+    xn = genfromtxt('x.txt')
+    unew = genfromtxt('unew.txt')
+    un = genfromtxt('un.txt')
+
+    from scipy.interpolate import interp1d
+    unew = interp1d(xn, unew)
+    un = interp1d(xn, un)
+
+    fn = Function('fn')
+
+    L = lambda u: u + Dt*fn(x)*dx(u) + nu*Dt*dx(dx(u))
+    # ...
+
+    # ... lambdification + evaluation
+    from numpy import linspace, pi
+    from numpy.random import rand
+
+#    x_u = linspace(0, 2*pi, 50)
+
+    x_u = rand(50) * 2*pi
+
+    x_f = x_u
+
+    us = un(x_u)
+    fs = unew(x_f)
+    # ...
+
+    from numpy.random import rand
+    from numpy import exp, ones, log
+    from time import time
+    from scipy.optimize import minimize
+
+    # compute the likelihood
+    nlml = NLML(L(u), u, 'SE')
+
+    # set values
+    nlml.set_u(x_u, us)
+    nlml.set_f(x_f, fs)
+
+    x_start = rand(len(nlml.args))
+
+    # ... using pure python implementation
+    from symgp.nelder_mead import nelder_mead
+
+    x_start = rand(len(nlml.args))
+
+    m = nelder_mead(nlml, x_start,
+                    step=1., no_improve_thr=1e-5, no_improv_break=6,
+                    max_iter=0, alpha=1., gamma=1.5, rho=-0.5, sigma=.5,
+                    verbose=False)
+
+    args = exp(m[0])
+    print('> estimated nu = ', nlml.map_args(args)['nu'])
+    # ...
 
 ######################################
 if __name__ == '__main__':
-    test_est_1d_1()
-    test_est_1d_2()
-    test_est_1d_3()
-    test_est_1d_4()
-    test_est_1d_5()
+#    test_est_1d_1()
+#    test_est_1d_2()
+#    test_est_1d_3()
+#    test_est_1d_4()
+#    test_est_1d_5()
 
-    test_est_1d_6()
+#    test_est_1d_6()
+    test_est_1d_7()

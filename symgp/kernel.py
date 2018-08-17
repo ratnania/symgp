@@ -19,6 +19,9 @@ from sympy import preorder_traversal
 
 from numpy import asarray, unique
 
+import matplotlib.pyplot as plt
+
+iteration = 0
 
 class KernelBase(Function):
     _name = 'K'
@@ -125,6 +128,45 @@ class SE(KernelBase):
             expr_2 = theta_2 * exp(-0.5*(yi - yj)**2/l_2**2)
             expr_3 = theta_3 * exp(-0.5*(zi - zj)**2/l_3**2)
             expr = expr_1 * expr_2 * expr_3
+
+        return expr
+
+class CSE(KernelBase):
+    _name = 'CSE'
+
+    @classmethod
+    def eval(cls, *args):
+
+        if not( len(args) == 2 ):
+            raise ValueError('> Expecting two arguments')
+
+        if isinstance(args[0], Symbol):
+            ldim = 1
+
+        elif isinstance(args[0], (tuple, list, Tuple)):
+            ldim = len(args[0])
+
+        # TODO must check that all arguments are of the same type (Symbols or
+        # tuples)
+
+        if ldim == 1:
+            raise NotImplementedError('')
+
+        elif ldim == 2:
+            theta_1 = Constant('theta_1')
+            theta_2 = Constant('theta_2')
+            l_1 = Constant('l_1')
+            l_2 = Constant('l_2')
+            l_12 = Constant('l_12')
+            xi,yi = args[0]
+            xj,yj = args[1]
+            expr_1 = theta_1 * exp(-0.5*(xi - xj)**2/l_1**2)
+            expr_2 = theta_2 * exp(-0.5*(yi - yj)**2/l_2**2)
+            expr_12 = exp(-(xi - xj)*(yi - yj)/l_12)
+            expr = expr_1 * expr_2 * expr_12
+
+        elif ldim == 3:
+            raise NotImplementedError('')
 
         return expr
 
@@ -725,7 +767,7 @@ def compile_kernels(expr, u, kernel, namespace=globals()):
 
 
 _template_nlml = """
-def nlml_func(params, x1, x2, y1, y2, s_u, s_f):
+def nlml_func(params, x1, x2, y1, y2, s_u, s_f, settings):
     import numpy as np
     params = np.exp(params)
 {__ASSIGN_ARGS__}
@@ -745,54 +787,91 @@ def nlml_func(params, x1, x2, y1, y2, s_u, s_f):
     return val.item(0)
 """
 
-def compile_nlml(expr, u, kernel, namespace=globals()):
-    d_fct, d_args = compile_kernels(expr, u, kernel)
-    d_args_str = {}
-    for name, args in list(d_args.items()):
-        d_args_str[name] = ', '.join(i for i in args)
+_template_nlml_svd = """
+def nlml_func(params, x1, x2, y1, y2, s_u, s_f, settings):
+    import numpy as np
+    params = np.exp(params)
+{__ASSIGN_ARGS__}
 
-    args = []
-    for name, values in list(d_args.items()):
-        args += [str(i) for i in values]
+    K = np.block([
+        [
+            {__KUU__}(x1, x2, {__KUU_ARGS__}) + s_u*np.identity(x1.shape[0]),
+            {__KUF__}(x1, x2, {__KUF_ARGS__})
+        ],
+        [
+            {__KFU__}(x1, x2, {__KFU_ARGS__}),
+            {__KFF__}(x2, x2, {__KFF_ARGS__}) + s_f*np.identity(x2.shape[0])
+        ]
+    ])
+    y = np.concatenate((y1, y2))
 
-    args = unique(args)
-    args.sort()
+    u, s, vh = np.linalg.svd(K)
+#    print(s.min(), s.max())
 
-    stmts = []
-    for i, a in enumerate(args):
-        pattern = '{__ARG__} = params[{i}]'
-        stmt = pattern.format(__ARG__=a, i=i)
-        stmts.append(stmt)
-
-    tab = ' '*4
-    assign_args_str = '\n'.join(tab + i for i in stmts)
-
-    # ...
-    template = _template_nlml
-    # ...
-
-    code = template.format(__KUU__='kuu', __KUU_ARGS__=d_args_str['kuu'],
-                           __KFU__='kfu', __KFU_ARGS__=d_args_str['kfu'],
-                           __KUF__='kuf', __KUF_ARGS__=d_args_str['kuf'],
-                           __KFF__='kff', __KFF_ARGS__=d_args_str['kff'],
-                           __ASSIGN_ARGS__=assign_args_str)
-
-    # ...
-#    print(code)
-#    import sys; sys.exit(0)
-    exec(code, namespace)
-    nlml = namespace['nlml']
+    # ... using cumulative explained var
+#    threshold = 0.9
+#    s_sum = s.sum()
+#    sn = []
+#    ti = 0
+#    i = 0
+#    while ti < threshold:
+#        sn.append(s[i])
+#        ti += s[i]/s_sum
+#        i += 1
     # ...
 
-    return nlml
+    # ... using min var
+    s_max = s.max()
+#    sn = [i for i in s if np.abs(i) > 0.005]
+    sn = [i for i in s if np.abs(i)/s_max > 1.e-3]
+    # ...
+
+    debug = False
+    if 'debug' in list(settings.keys()):
+        debug = True
+
+    if debug:
+        if 'iteration' in list(settings.keys()):
+            iteration = settings['iteration']
+
+            label = 'iteration ' + str(iteration)
+            plt.plot(np.log(s), '-', label=label)
+
+            settings['iteration'] += 1
+
+    n = len(sn)
+#    print('> n = ', n, '/', len(y))
+    un = u[:,:n]
+    vhn = vh[:n,:]
+    sn = s[:n]
+
+    d = sn.prod()
+    zl = np.dot(vhn, y)
+    zr = np.dot(y, un)
+    zl = np.conjugate(zl)
+    zr = np.conjugate(zr)
+
+    val = np.log(abs(d))
+    for i in range(0, n):
+        val += zl[i]*zr[i]/sn[i]
+
+    return val
+"""
 
 class NLML(object):
-    def __init__(self, expr, u, kernel, namespace=globals()):
+    def __init__(self, expr, u, kernel, namespace=globals(), **settings):
 
         if isinstance(kernel, str):
             kernel = eval(kernel)
 
         self._func = self._compile_nlml(expr, u, kernel, namespace=namespace)
+
+        self._debug = settings.pop('debug', False)
+        if self.debug:
+            settings['iteration'] = 0
+            settings['debug'] = self.debug
+
+        self._settings = settings
 
     @property
     def func(self):
@@ -805,6 +884,18 @@ class NLML(object):
     @property
     def params(self):
         return self._params
+
+    @property
+    def iteration(self):
+        return self._iteration
+
+    @property
+    def debug(self):
+        return self._debug
+
+    @property
+    def settings(self):
+        return self._settings
 
     @property
     def x_u(self):
@@ -866,7 +957,8 @@ class NLML(object):
         assign_args_str = '\n'.join(tab + i for i in stmts)
 
         # ...
-        template = _template_nlml
+#        template = _template_nlml
+        template = _template_nlml_svd
         # ...
 
         code = template.format(__KUU__='kuu', __KUU_ARGS__=d_args_str['kuu'],
@@ -884,7 +976,8 @@ class NLML(object):
 
         return nlml
 
-    def __call__(self, args, x_u=None, x_f=None, u=None, f=None, s_u=1.e-6, s_f=1.e-6):
+    def __call__(self, args, x_u=None, x_f=None, u=None, f=None, s_u=1.e-6,
+                 s_f=1.e-6):
         if x_u is None:
             x_u = self.x_u
 
@@ -897,4 +990,4 @@ class NLML(object):
         if f is None:
             f = self.f
 
-        return self.func(args, x_u, x_f, u, f, s_u, s_f)
+        return self.func(args, x_u, x_f, u, f, s_u, s_f, self.settings)

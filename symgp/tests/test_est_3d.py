@@ -31,12 +31,14 @@ def test_est_3d_1():
     u_num = lambdify((x,y,z), u_sym, "numpy")
     f_num = lambdify((x,y,z), f_sym, "numpy")
 
-    t = linspace(0, 1, 3)
-    x,y,z = meshgrid(t, t, t)
-    x_u = zeros((x.size, 3))
-    x_u[:,0] = x.reshape(x.size)
-    x_u[:,1] = y.reshape(y.size)
-    x_u[:,2] = z.reshape(z.size)
+#    t = linspace(0, 1, 3)
+#    x,y,z = meshgrid(t, t, t)
+#    x_u = zeros((x.size, 3))
+#    x_u[:,0] = x.reshape(x.size)
+#    x_u[:,1] = y.reshape(y.size)
+#    x_u[:,2] = z.reshape(z.size)
+
+    x_u = rand(100,3)
 
     x_f = x_u
 
