@@ -6,8 +6,7 @@ from sympy import Function
 
 from symfe import dx, Unknown, Constant
 
-from symgp.kernel import RBF, SE, RQ, Periodic, Linear
-from symgp.kernel import compile_nlml
+from symgp.kernel import NLML
 
 def test_est_1d_1():
     u = Unknown('u', ldim=1)
@@ -17,9 +16,6 @@ def test_est_1d_1():
     L = lambda u: dx(u) + phi*u
     L_expected = lambda u: dx(u) + 2.*u
     # ...
-
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF)
 
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
@@ -38,15 +34,16 @@ def test_est_1d_1():
     x_u = linspace(0, 2*pi, 10)
     x_f = x_u
 
-    u = u_num(x_u)
-    f = f_num(x_f)
+    us = u_num(x_u)
+    fs = f_num(x_f)
     # ...
 
-#    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
-#    print(v)
+    # compute the likelihood
+    nlml = NLML(L(u), u, 'RBF')
 
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+    # set values
+    nlml.set_u(x_u, us)
+    nlml.set_f(x_f, fs)
 
     from numpy.random import rand
     from numpy import exp, ones
@@ -55,13 +52,15 @@ def test_est_1d_1():
     # ... using scipy
     from scipy.optimize import minimize
 
+    x_start = rand(len(nlml.args))
+
     tb = time()
-    m = minimize(nlml_wp, rand(2), method="Nelder-Mead")
+    m = minimize(nlml, x_start, method="Nelder-Mead")
     te = time()
     elapsed_scipy = te-tb
 
-    phi_h = exp(m.x)
-    print(phi_h)
+    args = exp(m.x)
+    print('> estimated phi = ', nlml.map_args(args)['phi'])
 
     print('> elapsed time scipy  = ', elapsed_scipy)
     # ...
@@ -69,18 +68,18 @@ def test_est_1d_1():
     # ... using pure python implementation
     from symgp.nelder_mead import nelder_mead
 
+    x_start = rand(len(nlml.args))
+
     tb = time()
-#    x_start = rand(2)
-    x_start = ones(2)
-    m = nelder_mead(nlml_wp, x_start,
+    m = nelder_mead(nlml, x_start,
                     step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                     max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
                     verbose=False)
     te = time()
     elapsed_python = te-tb
 
-    phi_h = exp(m[0])
-    print(phi_h)
+    args = exp(m[0])
+    print('> estimated phi = ', nlml.map_args(args)['phi'])
 
     print('> elapsed time python = ', elapsed_python)
     # ...
@@ -96,9 +95,6 @@ def test_est_1d_2():
     L_expected = lambda u: x*dx(u) + 2.*u
     # ...
 
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF)
-
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
     from sympy import sin, cos
@@ -116,15 +112,16 @@ def test_est_1d_2():
     x_u = linspace(0, 2*pi, 10)
     x_f = x_u
 
-    u = u_num(x_u)
-    f = f_num(x_f)
+    us = u_num(x_u)
+    fs = f_num(x_f)
     # ...
 
-#    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
-#    print(v)
+    # compute the likelihood
+    nlml = NLML(L(u), u, 'RBF')
 
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+    # set values
+    nlml.set_u(x_u, us)
+    nlml.set_f(x_f, fs)
 
     from numpy.random import rand
     from numpy import exp, ones
@@ -133,18 +130,18 @@ def test_est_1d_2():
     # ... using pure python implementation
     from symgp.nelder_mead import nelder_mead
 
+    x_start = rand(len(nlml.args))
+
     tb = time()
-#    x_start = rand(2)
-    x_start = ones(2)
-    m = nelder_mead(nlml_wp, x_start,
+    m = nelder_mead(nlml, x_start,
                     step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                     max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
                     verbose=False)
     te = time()
     elapsed_python = te-tb
 
-    phi_h = exp(m[0])
-    print(phi_h)
+    args = exp(m[0])
+    print('> estimated phi = ', nlml.map_args(args)['phi'])
 
     print('> elapsed time python = ', elapsed_python)
     # ...
@@ -161,9 +158,6 @@ def test_est_1d_3():
     L_expected = lambda u: sin(x)*dx(u) + 2.*cos(x)*u
     # ...
 
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF)
-
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
     from sympy import sin, cos
@@ -181,15 +175,16 @@ def test_est_1d_3():
     x_u = linspace(0, 2*pi, 10)
     x_f = x_u
 
-    u = u_num(x_u)
-    f = f_num(x_f)
+    us = u_num(x_u)
+    fs = f_num(x_f)
     # ...
 
-#    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
-#    print(v)
+    # compute the likelihood
+    nlml = NLML(L(u), u, 'RBF')
 
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+    # set values
+    nlml.set_u(x_u, us)
+    nlml.set_f(x_f, fs)
 
     from numpy.random import rand
     from numpy import exp, ones
@@ -198,18 +193,18 @@ def test_est_1d_3():
     # ... using pure python implementation
     from symgp.nelder_mead import nelder_mead
 
+    x_start = rand(len(nlml.args))
+
     tb = time()
-#    x_start = rand(2)
-    x_start = ones(2)
-    m = nelder_mead(nlml_wp, x_start,
+    m = nelder_mead(nlml, x_start,
                     step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                     max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
                     verbose=False)
     te = time()
     elapsed_python = te-tb
 
-    phi_h = exp(m[0])
-    print(phi_h)
+    args = exp(m[0])
+    print('> estimated phi = ', nlml.map_args(args)['phi'])
 
     print('> elapsed time python = ', elapsed_python)
     # ...
@@ -226,9 +221,6 @@ def test_est_1d_4():
     L_expected = lambda u: dx(u) + cos(2.*x)*u
     # ...
 
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF)
-
     # ... symbolic functions for unknown and rhs
     from sympy.abc import x
     from sympy import sin, cos
@@ -246,15 +238,16 @@ def test_est_1d_4():
     x_u = linspace(0, 2*pi, 10)
     x_f = x_u
 
-    u = u_num(x_u)
-    f = f_num(x_f)
+    us = u_num(x_u)
+    fs = f_num(x_f)
     # ...
 
-#    v = nlml((0.69, 1.), x_u, x_f, y_u, y_f, 1e-6)
-#    print(v)
+    # compute the likelihood
+    nlml = NLML(L(u), u, 'RBF')
 
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
+    # set values
+    nlml.set_u(x_u, us)
+    nlml.set_f(x_f, fs)
 
     from numpy.random import rand
     from numpy import exp, ones
@@ -263,19 +256,18 @@ def test_est_1d_4():
     # ... using pure python implementation
     from symgp.nelder_mead import nelder_mead
 
+    x_start = rand(len(nlml.args))
+
     tb = time()
-    x_start = rand(2)
-    x_start[0] = 0.9
-#    print(x_start)
-    m = nelder_mead(nlml_wp, x_start,
+    m = nelder_mead(nlml, x_start,
                     step=0.1, no_improve_thr=10e-6, no_improv_break=10,
                     max_iter=0, alpha=1., gamma=2., rho=-0.5, sigma=0.5,
                     verbose=False)
     te = time()
     elapsed_python = te-tb
 
-    phi_h = exp(m[0])
-    print(phi_h)
+    args = exp(m[0])
+    print('> estimated phi = ', nlml.map_args(args)['phi'])
 
     print('> elapsed time python = ', elapsed_python)
     # ...
@@ -318,7 +310,6 @@ def test_est_1d_5():
         print('>>>> using : ', kernel)
 
         # compute the likelihood
-        from symgp.kernel import NLML
         nlml = NLML(L(u), u, kernel)
 
         # set values
@@ -360,7 +351,6 @@ def test_est_1d_6():
     xn = genfromtxt('x.txt')
     unew = genfromtxt('unew.txt')
     un = genfromtxt('un.txt')
-#    un = genfromtxt('fn.txt')
 
     from scipy.interpolate import interp1d
     unew = interp1d(xn, unew)
@@ -371,183 +361,62 @@ def test_est_1d_6():
     L = lambda u: u + Dt*fn(x)*dx(u) + nu*Dt*dx(dx(u))
     # ...
 
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, RBF)
-
     # ... lambdification + evaluation
     from numpy import linspace, pi
 
     x_u = linspace(0, 2*pi, 30)
     x_f = x_u
 
-    u = un(x_u)
-    f = unew(x_f)
-
-#    from numpy.linalg import norm
-#    norm_u = norm(u)
-#    norm_f = norm(f)
-#    u = u/norm_u
-#    f = f/norm_f
+    us = un(x_u)
+    fs = unew(x_f)
     # ...
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
 
     from numpy.random import rand
     from numpy import exp, ones, log
     from time import time
-
-    # ... using pure python implementation
-    from symgp.nelder_mead import nelder_mead
-
-    x_start = rand(2)
-#    x_start[0] = log(0.1)
-#    print('> x_start = ', x_start)
-
-#    m = nelder_mead(nlml_wp, x_start,
-#                    step=.2, no_improve_thr=10e-3, no_improv_break=10,
-#                    max_iter=0,
-#                    alpha=[1., 1.],
-#                    gamma=[4., 2.],
-#                    rho=[-1., -0.5],
-#                    sigma=[1., 0.5],
-#                    verbose=False)
-#
-#    params = exp(m[0])
-#    phi_h = params[0]
-#    theta_h = params[1]
-#    print('> estimated nu = ', phi_h)
-#    print('> estimated theta = ', theta_h)
-    # ...
-
-    # ...
     from scipy.optimize import minimize
-
-    x_start = rand(2)
-    x_start[0] = log(0.1)
-    print('> x_start = ', x_start)
-
-    methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B',
-               'TNC', 'COBYLA']
-    phis = []
-    for method in methods:
-        print('> {} method in progress ... '.format(method))
-        m = minimize(nlml_wp, x_start, method=method)
-        params = exp(m.x)
-
-        phi_h = params[0]
-        phis.append(phi_h)
-    # ...
-
     from tabulate import tabulate
-    print(tabulate([phis], headers=methods))
-
-
-def test_est_1d_7():
-    """Explicit time step for Burgers"""
-
-    u = Unknown('u', ldim=1)
-    nu = Constant('nu')
-
-    # ... define a partial differential operator as a lambda function
-    from sympy.abc import x
-    from sympy import sin, cos
-
-    Dt = 0.0010995574287564279
-    nu_expected = 0.07
-
-    from numpy import genfromtxt
-    xn = genfromtxt('x.txt')
-    unew = genfromtxt('unew.txt')
-    un = genfromtxt('un.txt')
-#    un = genfromtxt('fn.txt')
-
-    from scipy.interpolate import interp1d
-    unew = interp1d(xn, unew)
-    un = interp1d(xn, un)
-
-    fn = Function('fn')
-
-    L = lambda u: u + Dt*fn(x)*dx(u) + nu*Dt*dx(dx(u))
-    # ...
-
-    # compute the likelihood
-    nlml = compile_nlml(L(u), u, SE)
-
-    # ... lambdification + evaluation
-    from numpy import linspace, pi
-
-    x_u = linspace(0, 2*pi, 30)
-    x_f = x_u
-
-    u = un(x_u)
-    f = unew(x_f)
-
-#    from numpy.linalg import norm
-#    norm_u = norm(u)
-#    norm_f = norm(f)
-#    u = u/norm_u
-#    f = f/norm_f
-    # ...
-
-    nlml_wp = lambda params: nlml(params, x_u, x_f, u, f, 1e-6)
-
-    from numpy.random import rand
-    from numpy import exp, ones, log
-    from time import time
-
-    # ... using pure python implementation
-    from symgp.nelder_mead import nelder_mead
-
-#    x_start = rand(3)
-#    x_start[0] = log(0.1)
-#    print('> x_start = ', x_start)
-
-#    m = nelder_mead(nlml_wp, x_start,
-#                    step=.2, no_improve_thr=10e-3, no_improv_break=10,
-#                    max_iter=0,
-#                    alpha=[1., 1.],
-#                    gamma=[4., 2.],
-#                    rho=[-1., -0.5],
-#                    sigma=[1., 0.5],
-#                    verbose=False)
-#
-#    params = exp(m[0])
-#    phi_h = params[0]
-#    theta_h = params[1]
-#    print('> estimated nu = ', phi_h)
-#    print('> estimated theta = ', theta_h)
-    # ...
 
     # ...
-    from scipy.optimize import minimize
+    def solve(kernel):
+        print('>>>> using : ', kernel)
 
-    x_start = rand(3)
-#    x_start[0] = log(0.1)
-    print('> x_start = ', x_start)
+        # compute the likelihood
+        nlml = NLML(L(u), u, kernel)
 
-    methods = ['Nelder-Mead', 'Powell', 'TNC']
-    phis = []
-    for method in methods:
-        print('> {} method in progress ... '.format(method))
-        m = minimize(nlml_wp, x_start, method=method)
-        params = exp(m.x)
+        # set values
+        nlml.set_u(x_u, us)
+        nlml.set_f(x_f, fs)
 
-        phi_h = params[1]
-        phis.append(phi_h)
+        x_start = rand(len(nlml.args))
+
+#        methods = ['Nelder-Mead', 'Powell', 'CG', 'BFGS', 'L-BFGS-B', 'TNC', 'COBYLA']
+#        methods = ['Nelder-Mead', 'Powell', 'CG']
+        methods = ['CG']
+        phis = []
+        for method in methods:
+            print('> {} method in progress ... '.format(method))
+            m = minimize(nlml, x_start, method=method, jac=False)
+
+            args = exp(m.x)
+            phi_h = nlml.map_args(args)['nu']
+            print('> estimated phi = ', phi_h)
+            phis.append(phi_h)
+
+        print(tabulate([phis], headers=methods))
     # ...
 
-    from tabulate import tabulate
-    print(tabulate([phis], headers=methods))
-
-
+#    for kernel in ['RBF', 'SE', 'GammaSE', 'RQ', 'Linear', 'Periodic']:
+#    for kernel in ['RBF', 'SE']:
+    for kernel in ['RBF']:
+        solve(kernel)
 
 ######################################
 if __name__ == '__main__':
-#    test_est_1d_1()
-#    test_est_1d_2()
-#    test_est_1d_3()
-#    test_est_1d_4()
+    test_est_1d_1()
+    test_est_1d_2()
+    test_est_1d_3()
+    test_est_1d_4()
     test_est_1d_5()
 
-#    test_est_1d_6()
-#    test_est_1d_7()
+    test_est_1d_6()
